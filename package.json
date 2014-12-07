@@ -1,0 +1,25 @@
+{
+  "name": "issuemd",
+  "version": "0.0.0",
+  "description": "issue tracking in hand",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/issuemd/issuemd.git"
+  },
+  "keywords": [
+    "distributed",
+    "issue",
+    "tracking",
+    "issuemd"
+  ],
+  "author": "Billy Moon (billy@issue.md)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/issuemd/issuemd/issues"
+  },
+  "homepage": "https://github.com/issuemd/issuemd"
+}
