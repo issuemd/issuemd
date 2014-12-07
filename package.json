@@ -21,5 +21,15 @@
   "bugs": {
     "url": "https://github.com/issuemd/issuemd/issues"
   },
-  "homepage": "https://github.com/issuemd/issuemd"
+  "homepage": "https://github.com/issuemd/issuemd",
+  "dependencies": {
+    "marked": "^0.3.2",
+    "mustache": "^0.8.2"
+  },
+  "devDependencies": {
+    "browserify": "^7.0.0",
+    "gulp-peg": "^0.1.2",
+    "gutil": "^1.5.5",
+    "vinyl-transform": "^1.0.0"
+  }
 }
