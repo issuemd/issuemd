@@ -5,10 +5,10 @@ var gulp = require("gulp"),
     transform = require("vinyl-transform");
 
 var paths = {
-  build: "core/dist",
+  build: "dist",
   scripts: {
-    core: "core/src/issuemd.js",
-    peg: "core/src/parser.pegjs"
+    core: "src/issuemd.js",
+    peg: "src/parser.pegjs"
   }
 };
 
