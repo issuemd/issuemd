@@ -1,6 +1,6 @@
 {
   "name": "issuemd",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "issue tracking in hand",
   "main": "dist/issuemd.js",
   "scripts": {
@@ -30,6 +30,7 @@
     "browserify": "^7.0.0",
     "gulp-peg": "^0.1.2",
     "gutil": "^1.5.5",
-    "vinyl-transform": "^1.0.0"
+    "vinyl-transform": "^1.0.0",
+    "gulp": "~3.8.11"
   }
 }

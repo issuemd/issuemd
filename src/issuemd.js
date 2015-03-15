@@ -128,7 +128,7 @@
         remove: function(input){
 
             // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
-            var indices = issuemd.utils.typeof(input) === "Array" ? input : Array.prototype.slice.call(arguments);
+            var indices = issuemd.utils.typeof(input) === "array" ? input : Array.prototype.slice.call(arguments);
 
             // get reference to current context (issue collection) for use in callback
             var that = this;
@@ -143,23 +143,34 @@
         },
 
         // modifies all issues with modified/modifier (defaults to now if null) and optional attrs object and/or comment string
-        // TODO: accept comment object (as extracted from JSO comments array) as well as of multiple arguments
-        update: function(args){
-            this.each(function(issue){
-                var update = {
-                    modified: args.modified || utils.now(),
-                    modifier: args.modifier,
-                    meta: []
+        update: function(/* issue_update_object | modified, modifier[, (meta_array|meta_hash)][, body] */){
+            var args;
+            if (arguments.length === 1) {
+                args = arguments[0];
+            } else {
+                args = {
+                    modified: arguments[0],
+                    modifier: arguments[1]
                 };
-                if(utils.isObject(args.meta)){
-                    utils.each(args.meta, function(val, key){
-                        update.meta.push({key:key,val:val});
-                    });
+                if(arguments.length === 3 && typeof arguments[2] === 'string') {
+                    args.body = arguments[2];
+                } else {
+                    // if the `meta` argument is not an object assume it's an array akin to issue updates meta array
+                    if (utils.typeof(arguments[2]) !== "object") {
+                        args.meta = arguments[2];
+                    } else {
+                        // else assume it is a key/value pair hash, and map it to array akin to issue updates meta array
+                        args.meta = issuemd.utils.mapToArray(arguments[2], function (val, key) {
+                            return {key: key, val: val};
+                        });
+                    }
+                    // and set the body
+                    args.body = arguments[3];
                 }
-                if(typeof args.body === "string") {
-                    update.body = args.body;
-                }
-                issue.updates.push(update)
+            }
+            // TODO: should default falsy modified value to `now`
+            this.each(function(issue){
+                issue.updates.push(args);
             });
             return this;
         },
@@ -294,7 +305,7 @@
     var issue_array_from_anything = function(input){
         if (input instanceof issuemd.fn.constructor) {
             return input.toArray();
-        } else if (utils.typeof(input) === "Array") {
+        } else if (utils.typeof(input) === "array") {
             var arr = [];
             for(var i=0; i<input.length; i++) {
                 var item = input[i];
@@ -304,9 +315,9 @@
                 arr = arr.concat(issue_array_from_anything(item));
             }
             return arr;
-        } else if (utils.typeof(input) === "Object") {
+        } else if (utils.typeof(input) === "object") {
             return [utils.makeIssue(input.original, input.updates)];
-        } else if (utils.typeof(input) === "String") {
+        } else if (utils.typeof(input) === "string") {
             return issuemd.parser.parse(input);
         }
     };
