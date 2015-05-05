@@ -87,8 +87,8 @@
         },
 
         // when coerced into string, return issue collection as md
-        toString: function(){
-            return this.md();
+        toString: function(cols){
+            return issuemd.formatter.string(this.toArray(), cols);
         },
 
         // return MD render of all ussues

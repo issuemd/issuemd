@@ -27,7 +27,7 @@ module.exports = {
                 body: original.body || ""
             },
             updates: updates || []
-        }
+        };
     },
     // TODO: better method to deep copy
     copy: function (input) {
