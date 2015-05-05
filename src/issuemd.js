@@ -298,6 +298,20 @@
                 }
                 return key ? arr : arr[0];
             }
+        },
+        comments: function(){
+            if(this.length > 1){
+                issuemd.utils.debug.warn('`issuemd.fn.comments` is meant to operate on single issue, but got more than one, so will ignore others after first.');
+            }
+            if(this[0]){
+                var out = [];
+                issuemd.utils.each(this[0].updates, function(update){
+                    if(issuemd.utils.typeof(update.body) === 'string' && update.body.length){
+                        out.push(utils.copy(update));
+                    }
+                });
+                return out;
+            }
         }
     };
 

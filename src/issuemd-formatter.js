@@ -83,18 +83,7 @@ module.exports = function () {
 
     var json2string = function (issueJSObject, cols) {
 
-        // uses cols
-        function metaLine(left, key, middle, val, right, widest, pad){
-            return left+key+r(pad||' ',widest-key.length)+middle+val+r(pad||' ',(cols||80)-(left+middle+right).length-widest-val.length)+right;
-        }
-
-        // uses cols
-        function bodyLine(left, content, right, pad){
-            return left+content+r(pad||' ',(cols||80)-(left+right).length-content.length)+right;
-        }
-
-        // repeat helper function
-        function r(char, qty){
+        function repeat(char, qty){
             var out = '';
             for(var i=0;i<qty;i++){
                 out += char;
@@ -105,73 +94,99 @@ module.exports = function () {
         function splitLines(input){
             var output = [];
             input.replace(new RegExp('(\n)|(.{0,'+((cols||80)-4)+'})(?:[ \n]|$)','g'),function(discard,n,o){ output.push(n?'':o); });
+            // TODO: should not need to pop - but why is there always an empty string at the end..?
+            output.pop();
             return output;
         }
 
+        var template = [ // ┬
+            "{{#data}}",
+
+            "┌─{{#util.pad}}─{{/util.pad                                                   }}─┐",
+            "{{#title}}",
+            "│ {{#util.body}}{{{.}}}{{/util.body                                           }} │",
+            "{{/title}}",
+            "├─{{#util.padleft}}─{{/util.padleft}}─┬─{{#util.padright}}─{{/util.padright   }}─┤",
+            "│ {{#util.key}}created{{/util.key  }} │ {{#util.val}}{{{created}}}{{/util.val }} │",
+            "│ {{#util.key}}creator{{/util.key  }} │ {{#util.val}}{{{creator}}}{{/util.val }} │",
+            "{{#meta}}",
+            "│ {{#util.key}}{{{key}}}{{/util.key}} │ {{#util.val}}{{{val}}}{{/util.val     }} │",
+            "{{/meta}}",
+            "│ {{#util.pad}} {{/util.pad                                                   }} │",
+            "{{#body}}",
+            "│ {{#util.body}}{{{.}}}{{/util.body                                           }} │",
+            "{{/body}}",
+            "{{#comments}}",
+            "│ {{#util.pad}} {{/util.pad                                                   }} │",
+            "├─{{#util.padleft}}─{{/util.padleft}}─┬─{{#util.padright}}─{{/util.padright   }}─┤",
+            "│ {{#util.key}}modified{{/util.key }} │ {{#util.val}}{{{modified}}}{{/util.val}} │",
+            "│ {{#util.key}}modifier{{/util.key }} │ {{#util.val}}{{{modifier}}}{{/util.val}} │",
+            "{{#body}}",
+            "│ {{#util.pad}} {{/util.pad                                                   }} │",
+            "│ {{#util.body}}{{{.}}}{{/util.body                                           }} │",
+            "{{/body}}",
+            "{{/comments}}",
+            "└─{{#util.pad}}─{{/util.pad                                                   }}─┘",
+
+            "{{/data}}"
+        ].join("\n");
+
+        var body = function(){ return function(str, render){
+            var content = render(str);
+            return content+repeat(' ',(cols||80)-4-content.length);
+        }}
+
+        var padleft = function(){ return function(str, render){
+            return repeat(render(str), widest);
+        }}
+
+        var padright = function(){ return function(str, render){
+            return repeat(render(str), (cols||80)-widest-7);
+        }}
+
+        var pad = function(){ return function(str, render){
+            return repeat(render(str), (cols||80)-4);
+        }}
+
+        // TODO: better handling of the widest element
+        var widest=0;
+        var key = function(){ return function(str, render){
+            var content = render(str);
+            return content+repeat(' ',widest-content.length);
+        }}
+        var val = function(){ return function(str, render){
+            return render(str)+repeat(' ',(cols||80)-7-widest-render(str).length);
+        }}
+
         if (issueJSObject) {
+            var out = [], issues = issuemd(issueJSObject);
+            issues.each(function(issueJson){
 
-            var templates = [];
+                var issue = issuemd(issueJson), data = {meta:[],comments:[]};
 
-            issuemd(issueJSObject).each(function(issue){
-
-                var widest = 0;
-
-                issuemd.utils.each(issuemd(issue).attr(), function(val, key){
-                    widest = widest > key.length ? widest : key.length;
-                });
-                
-                // TODO: check if this only works because body is shorter than modifier etc...
-                issuemd.utils.each(issueJSObject[0].updates, function(update){
-                    issuemd.utils.each(update, function(val, key){
-                        widest = widest > key.length ? widest : key.length;
-                    });
-                });
-                
-                var table = [
-                    bodyLine('┌─', '', '─┐', '─'),
-                    bodyLine('│ ', issue.original.title, ' │'),
-                    metaLine('├─', '', '─┬─', '', '─┤', widest, '─'),
-                    metaLine('│ ', 'created', ' │ ', issue.original.created, ' │', widest),
-                    metaLine('│ ', 'creator', ' │ ', issue.original.creator, ' │', widest)
-                ];
-
-                issuemd.utils.each(issue.original.meta, function(item){
-                    table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │', widest));
-                });
-
-                table.push(bodyLine('│ ', '', ' │'));
-
-                var lines = splitLines(issue.original.body);
-                issuemd.utils.each(lines, function(line){
-                    table.push(bodyLine('│ ', line, ' │'));
-                });
-
-                issuemd.utils.each(issue.updates, function(update){
-                    table.push(metaLine('├─', '', '─┬─', '', '─┤', widest, '─')),
-                    table.push(metaLine('│ ', 'modifier', ' │ ', update.modifier, ' │', widest)),
-                    table.push(metaLine('│ ', 'modified', ' │ ', update.modified, ' │', widest)),
-                    issuemd.utils.each(update.meta, function(item){
-                        table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │', widest));
-                    });
-                    if(update.body){
-                        table.push(bodyLine('│ ', '', ' │'));
-                        var lines = splitLines(update.body);
-                        issuemd.utils.each(lines, function(line){
-                            table.push(bodyLine('│ ', line, ' │'));
-                        });                        
+                widest=0;
+                issuemd.utils.each(issue.attr(), function(val, key){
+                    if(key === 'title' || key === 'body'){
+                        data[key] = splitLines(val);
+                    } else if(key === 'created' || key == 'creator'){
+                        data[key] = val;
+                        if(key.length > widest){ widest = key.length; }
+                    } else {
+                        data.meta.push({key:key,val:val});
+                        if(key.length > widest){ widest = key.length; }
                     }
-
                 });
-                
-                table.push(bodyLine('└─', '', '─┘', '─'));
 
-                templates.push(table.join('\n'));
+                issuemd.utils.each(issue.comments(), function(val){
+                    val.body = splitLines(val.body);
+                    data.comments.push(val);
+                });
 
+                out.push(mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,padleft:padleft,padright:padright},data:data}));
             });
 
-            // TODO: figure out better way to handle trailing newlines after last issue
-            return templates.join('\n');
-        }
+            return out.join('\n');
+        };
 
     };
 
