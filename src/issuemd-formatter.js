@@ -83,6 +83,16 @@ module.exports = function () {
 
     var json2string = function (issueJSObject, cols) {
 
+        // uses cols
+        function metaLine(left, key, middle, val, right, widest, pad){
+            return left+key+r(pad||' ',widest-key.length)+middle+val+r(pad||' ',(cols||80)-(left+middle+right).length-widest-val.length)+right;
+        }
+
+        // uses cols
+        function bodyLine(left, content, right, pad){
+            return left+content+r(pad||' ',(cols||80)-(left+right).length-content.length)+right;
+        }
+
         // repeat helper function
         function r(char, qty){
             var out = '';
@@ -94,29 +104,17 @@ module.exports = function () {
 
         function splitLines(input){
             var output = [];
-            input.replace(new RegExp('(\n)|(.{0,'+(w-4)+'})(?:[ \n]|$)','g'),function(discard, n,o){ output.push(n?"":o); });
+            input.replace(new RegExp('(\n)|(.{0,'+((cols||80)-4)+'})(?:[ \n]|$)','g'),function(discard,n,o){ output.push(n?'':o); });
             return output;
         }
 
         if (issueJSObject) {
 
-            var w = cols || 80, widest;
-
-            // uses width and widest
-            function metaLine(left, key, middle, val, right, pad){
-                return left+key+r(pad||' ',widest-key.length)+middle+val+r(pad||' ',w-(left+middle+right).length-widest-val.length)+right;
-            }
-
-            // uses width and widest
-            function bodyLine(left, content, right, pad){
-                return left+content+r(pad||' ',w-(left+right).length-content.length)+right;
-            }
-
             var templates = [];
 
             issuemd(issueJSObject).each(function(issue){
 
-                widest = 0;
+                var widest = 0;
 
                 issuemd.utils.each(issuemd(issue).attr(), function(val, key){
                     widest = widest > key.length ? widest : key.length;
@@ -132,13 +130,13 @@ module.exports = function () {
                 var table = [
                     bodyLine('┌─', '', '─┐', '─'),
                     bodyLine('│ ', issue.original.title, ' │'),
-                    metaLine('├─', '', '─┬─', '', '─┤', '─'),
-                    metaLine('│ ', 'created', ' │ ', issue.original.created, ' │'),
-                    metaLine('│ ', 'creator', ' │ ', issue.original.creator, ' │')
+                    metaLine('├─', '', '─┬─', '', '─┤', widest, '─'),
+                    metaLine('│ ', 'created', ' │ ', issue.original.created, ' │', widest),
+                    metaLine('│ ', 'creator', ' │ ', issue.original.creator, ' │', widest)
                 ];
 
                 issuemd.utils.each(issue.original.meta, function(item){
-                    table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │'));
+                    table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │', widest));
                 });
 
                 table.push(bodyLine('│ ', '', ' │'));
@@ -149,11 +147,11 @@ module.exports = function () {
                 });
 
                 issuemd.utils.each(issue.updates, function(update){
-                    table.push(metaLine('├─', '', '─┬─', '', '─┤', '─')),
-                    table.push(metaLine('│ ', 'modifier', ' │ ', update.modifier, ' │')),
-                    table.push(metaLine('│ ', 'modified', ' │ ', update.modified, ' │')),
+                    table.push(metaLine('├─', '', '─┬─', '', '─┤', widest, '─')),
+                    table.push(metaLine('│ ', 'modifier', ' │ ', update.modifier, ' │', widest)),
+                    table.push(metaLine('│ ', 'modified', ' │ ', update.modified, ' │', widest)),
                     issuemd.utils.each(update.meta, function(item){
-                        table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │'));
+                        table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │', widest));
                     });
                     if(update.body){
                         table.push(bodyLine('│ ', '', ' │'));
