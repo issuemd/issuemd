@@ -14,7 +14,7 @@ module.exports = function () {
         for(var j = issue.length; j--;){
             issue[j].original.body = marked(issue[j].original.body);
             for(i = issue[j].updates.length;i--;){
-                issue[j].updates[i].body = marked(issue[j].updates[i].body)
+                issue[j].updates[i].body = marked(issue[j].updates[i].body);
             }            
         }
 
@@ -134,29 +134,29 @@ module.exports = function () {
         var body = function(){ return function(str, render){
             var content = render(str);
             return content+repeat(' ',(cols||80)-4-content.length);
-        }}
+        };};
 
         var padleft = function(){ return function(str, render){
             return repeat(render(str), widest);
-        }}
+        };};
 
         var padright = function(){ return function(str, render){
             return repeat(render(str), (cols||80)-widest-7);
-        }}
+        };};
 
         var pad = function(){ return function(str, render){
             return repeat(render(str), (cols||80)-4);
-        }}
+        };};
 
         // TODO: better handling of the widest element
         var widest=0;
         var key = function(){ return function(str, render){
             var content = render(str);
             return content+repeat(' ',widest-content.length);
-        }}
+        };};
         var val = function(){ return function(str, render){
             return render(str)+repeat(' ',(cols||80)-7-widest-render(str).length);
-        }}
+        };};
 
         if (issueJSObject) {
             var out = [], issues = issuemd(issueJSObject);
@@ -186,7 +186,7 @@ module.exports = function () {
             });
 
             return out.join('\n');
-        };
+        }
 
     };
 
@@ -194,6 +194,6 @@ module.exports = function () {
         md: json2md,
         html: json2html,
         string: json2string
-    }
+    };
 
 }();
