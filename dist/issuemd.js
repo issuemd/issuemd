@@ -2883,12 +2883,23 @@ module.exports = function () {
 
         if (issueJSObject) {
 
-            var w = cols || 80;
+            var w = cols || 80, widest;
+
+            // uses width and widest
+            function metaLine(left, key, middle, val, right, pad){
+                return left+key+r(pad||' ',widest-key.length)+middle+val+r(pad||' ',w-(left+middle+right).length-widest-val.length)+right;
+            }
+
+            // uses width and widest
+            function bodyLine(left, content, right, pad){
+                return left+content+r(pad||' ',w-(left+right).length-content.length)+right;
+            }
+
             var templates = [];
 
             issuemd(issueJSObject).each(function(issue){
 
-                var widest = 0;
+                widest = 0;
 
                 issuemd.utils.each(issuemd(issue).attr(), function(val, key){
                     widest = widest > key.length ? widest : key.length;
@@ -2902,41 +2913,42 @@ module.exports = function () {
                 });
                 
                 var table = [
-                    '┌' + r('─',w-2) + '┐',
-                    '│ '+issue.original.title+r(' ',w-4-issue.original.title.length)+' │',
-                    '├'+r('─',widest+2)+'┬'+r('─',w-5-widest)+'┤',
-                    '│ created'+r(' ',widest-7)+' │ '+issue.original.created+r(' ',w-7-widest-issue.original.created.length)+' │',
-                    '│ creator'+r(' ',widest-7)+' │ '+issue.original.creator+r(' ',w-7-widest-issue.original.creator.length)+' │'
+                    bodyLine('┌─', '', '─┐', '─'),
+                    bodyLine('│ ', issue.original.title, ' │'),
+                    metaLine('├─', '', '─┬─', '', '─┤', '─'),
+                    metaLine('│ ', 'created', ' │ ', issue.original.created, ' │'),
+                    metaLine('│ ', 'creator', ' │ ', issue.original.creator, ' │')
                 ];
 
                 issuemd.utils.each(issue.original.meta, function(item){
-                    table.push('│ '+item.key+r(' ',widest-item.key.length)+' │ '+item.val+r(' ',w-7-item.val.length-widest)+' │');
+                    table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │'));
                 });
-                
-                table.push('│ ' + r(' ',w-4) + ' │');
+
+                table.push(bodyLine('│ ', '', ' │'));
+
                 var lines = splitLines(issue.original.body);
                 issuemd.utils.each(lines, function(line){
-                    table.push('│ ' + line + r(' ',w-4-line.length) + ' │');                
+                    table.push(bodyLine('│ ', line, ' │'));
                 });
 
                 issuemd.utils.each(issue.updates, function(update){
-                    table.push('├'+r('─',widest+2)+'┬'+r('─',w-5-widest)+'┤');
-                    table.push('│ modifier'+r(' ',widest-8)+' │ '+update.modifier+r(' ',w-7-update.modifier.length-widest)+' │');
-                    table.push('│ modified'+r(' ',widest-8)+' │ '+update.modified+r(' ',w-7-update.modified.length-widest)+' │');
+                    table.push(metaLine('├─', '', '─┬─', '', '─┤', '─')),
+                    table.push(metaLine('│ ', 'modifier', ' │ ', update.modifier, ' │')),
+                    table.push(metaLine('│ ', 'modified', ' │ ', update.modified, ' │')),
                     issuemd.utils.each(update.meta, function(item){
-                        table.push('│ '+item.key+r(' ',widest-item.key.length)+' │ '+item.val+r(' ',w-7-item.val.length-widest)+' │');
+                        table.push(metaLine('│ ', item.key, ' │ ', item.val, ' │'));
                     });
                     if(update.body){
-                        table.push('│ ' + r(' ',w-4) + ' │');
+                        table.push(bodyLine('│ ', '', ' │'));
                         var lines = splitLines(update.body);
                         issuemd.utils.each(lines, function(line){
-                            table.push('│ ' + line + r(' ',w-4-line.length) + ' │');                
+                            table.push(bodyLine('│ ', line, ' │'));
                         });                        
                     }
 
                 });
                 
-                table.push('└' + r('─',w-2) + '┘');
+                table.push(bodyLine('└─', '', '─┘', '─'));
 
                 templates.push(table.join('\n'));
 
