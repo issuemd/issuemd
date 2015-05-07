@@ -27,7 +27,7 @@ module.exports = {
                 body: original.body || ""
             },
             updates: updates || []
-        }
+        };
     },
     // TODO: better method to deep copy
     copy: function (input) {
@@ -80,5 +80,12 @@ module.exports = {
             results.push(iteratee(val, index, arr));
         });
         return results;
+    },
+    debug: {
+        warn: function(message){
+            if(console.warn) console.warn(message);
+            else console.log(message);
+        },
+        log: console.log
     }
 };
