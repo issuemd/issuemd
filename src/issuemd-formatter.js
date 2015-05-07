@@ -1,8 +1,8 @@
 module.exports = function () {
 
-    var mustache = require('mustache'),
+    var mustache = require('../vendor/mustache'),
         // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
-        marked = require('marked'),
+        marked = require('../vendor/marked'),
         utils = require('./utils.js');
 
     var json2html = function (issueJSObject) {
