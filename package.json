@@ -4,7 +4,11 @@
   "description": "issue tracking in hand",
   "main": "dist/issuemd.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bump": "node ./scripts/bump.js",
+    "bump:patch": "node ./scripts/bump.js",
+    "bump:major": "node ./scripts/bump.js major",
+    "bump:minor": "node ./scripts/bump.js minor"
   },
   "repository": {
     "type": "git",
