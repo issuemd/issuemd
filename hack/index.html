@@ -11,7 +11,6 @@
 	<!-- mock the require function -->
 	<script>
 	var parser;
-	window.loader = {};
 	function require(resource) {
 		switch(resource){
 			case '../vendor/mustache': return Mustache;
@@ -22,23 +21,28 @@
 			case '../dist/parser.js': return parser;
 		}
 	}
+	// TODO: tear down the pyramid of doom!
 	superagent.get('../src/parser.pegjs').end(function(e, g){
-		issuemd.parser = PEG.buildParser(g.text);
-		ready();
+		parser = PEG.buildParser(g.text);
+		superagent.get('../src/issuemd.js').end(function(e, g){
+			eval(g.text);
+			superagent.get('issuemd-filter.js').end(function(e, g){
+				eval(g.text);
+				superagent.get('hack.js').end(function(e, g){
+					eval(g.text);
+				});
+			});
+		});
 	});
 	</script>
 	<!-- load components and add reference to loader -->
-	<script>window.module = {};</script>
+	<script>window.module = {}; window.loader = {};</script>
 	<script src="../src/utils.js"></script>
 	<script>loader.utils = module.exports;</script>
 	<script src="../src/issuemd-merger.js"></script>
 	<script>loader.merger = module.exports;</script>
 	<script src="../src/issuemd-formatter.js"></script>
 	<script>loader.formatter = module.exports;</script>
-	<script src="../src/issuemd.js"></script>
-	<script src="issuemd-filter.js"></script>
-	<!-- load development script -->
-	<script src="hack.js"></script>
 
 </head>
 <body>
