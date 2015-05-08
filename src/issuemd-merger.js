@@ -39,7 +39,7 @@ module.exports = function () {
 
         return left;
 
-    }
+    };
 
     return merge;
 
