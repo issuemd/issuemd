@@ -314,7 +314,7 @@
     };
 
     // TODO: read in config to set this and other things like it
-    issuemd.version = '0.0.4';
+    issuemd.version = '0.0.7';
 
     // get the core components in place
     issuemd.parser = parser;
