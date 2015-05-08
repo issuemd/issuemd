@@ -226,6 +226,34 @@
         }
     }
 
+    function filterByFunction(collection, filter_function){
+        var out = issuemd();
+        collection.each(function(item){
+            if(filter_function(issuemd(item))){
+                out.merge(item);
+            }
+        });
+        return out;
+    }
+
+    function filterByAttr(collection, key, val_in){
+        var vals = issuemd.utils.typeof(val_in) === 'array' ? val_in : [val_in];
+        return filterByFunction(collection, function(issue){
+            var attr_val = issue.attr(key), match = false;
+            issuemd.utils.each(vals, function(val){
+                if(!match && (issuemd.utils.typeof(val) === 'regexp' && val.test(attr_val)) || attr_val === val){
+                    match = true;
+                    return match;                        
+                }
+            });
+            return match;
+        });
+    }
+
+    function filter(collection, first, second){
+        return second ? filterByAttr(collection, first, second): filterByFunction(collection, first);
+    }
+
     /* helper functions for Issuemd class */
 
     // TODO: fix this - logic is all wrong - needs to accept any issue-ish things, and return existing issue with intput merged/concatentated into collection
@@ -284,6 +312,9 @@
     $i = issuemd = function(input) {
         return new Issuemd(input);
     };
+
+    // TODO: read in config to set this and other things like it
+    issuemd.version = '0.0.4';
 
     // get the core components in place
     issuemd.parser = parser;
@@ -366,7 +397,8 @@
         merge: passThis(localmerge),
         attr: passThis(attr),
         meta: passThis(meta),
-        comments: passThis(comments)
+        comments: passThis(comments),
+        filter: passThis(filter)
     };
 
     // hook module into AMD/require etc... or create as global variable

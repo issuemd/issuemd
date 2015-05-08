@@ -93,9 +93,14 @@ module.exports = function () {
 
         function splitLines(input){
             var output = [];
-            input.replace(new RegExp('(\n)|(.{0,'+((cols||80)-4)+'})(?:[ \n]|$)','g'),function(discard,n,o){ output.push(n?'':o); });
-            // TODO: should not need to pop - but why is there always an empty string at the end..?
-            output.pop();
+            var lines = utils.wordwrap(input, ((cols||80)-4)).replace(/\n\n+/,'\n\n').split('\n');
+            utils.each(lines, function(item, key){
+                if(item.length < ((cols||80)-4)){
+                    output.push(item);
+                } else {
+                    output = output.concat(item.match(new RegExp('.{1,'+((cols||80)-4)+'}','g')));
+                }
+            });
             return output;
         }
 
@@ -165,7 +170,7 @@ module.exports = function () {
                 var issue = issuemd(issueJson), data = {meta:[],comments:[]};
 
                 widest=0;
-                issuemd.utils.each(issue.attr(), function(val, key){
+                utils.each(issue.attr(), function(val, key){
                     if(key === 'title' || key === 'body'){
                         data[key] = splitLines(val);
                     } else if(key === 'created' || key == 'creator'){
@@ -177,7 +182,7 @@ module.exports = function () {
                     }
                 });
 
-                issuemd.utils.each(issue.comments(), function(val){
+                utils.each(issue.comments(), function(val){
                     val.body = splitLines(val.body);
                     data.comments.push(val);
                 });
