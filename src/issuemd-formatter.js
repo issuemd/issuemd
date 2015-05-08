@@ -99,34 +99,34 @@ module.exports = function () {
             return output;
         }
 
-        var template = [ // ┬
+        var template = [
             "{{#data}}",
 
-            "┌─{{#util.pad}}─{{/util.pad                                                   }}─┐",
+            "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
             "{{#title}}",
-            "│ {{#util.body}}{{{.}}}{{/util.body                                           }} │",
+            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
             "{{/title}}",
-            "├─{{#util.padleft}}─{{/util.padleft}}─┬─{{#util.padright}}─{{/util.padright   }}─┤",
-            "│ {{#util.key}}created{{/util.key  }} │ {{#util.val}}{{{created}}}{{/util.val }} │",
-            "│ {{#util.key}}creator{{/util.key  }} │ {{#util.val}}{{{creator}}}{{/util.val }} │",
+            "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
+            "| {{#util.key}}created{{/util.key  }} | {{#util.val}}{{{created}}}{{/util.val }} |",
+            "| {{#util.key}}creator{{/util.key  }} | {{#util.val}}{{{creator}}}{{/util.val }} |",
             "{{#meta}}",
-            "│ {{#util.key}}{{{key}}}{{/util.key}} │ {{#util.val}}{{{val}}}{{/util.val     }} │",
+            "| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.val}}{{{val}}}{{/util.val     }} |",
             "{{/meta}}",
-            "│ {{#util.pad}} {{/util.pad                                                   }} │",
+            "| {{#util.pad}} {{/util.pad                                                   }} |",
             "{{#body}}",
-            "│ {{#util.body}}{{{.}}}{{/util.body                                           }} │",
+            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
             "{{/body}}",
             "{{#comments}}",
-            "│ {{#util.pad}} {{/util.pad                                                   }} │",
-            "├─{{#util.padleft}}─{{/util.padleft}}─┬─{{#util.padright}}─{{/util.padright   }}─┤",
-            "│ {{#util.key}}modified{{/util.key }} │ {{#util.val}}{{{modified}}}{{/util.val}} │",
-            "│ {{#util.key}}modifier{{/util.key }} │ {{#util.val}}{{{modifier}}}{{/util.val}} │",
+            "| {{#util.pad}} {{/util.pad                                                   }} |",
+            "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
+            "| {{#util.key}}modified{{/util.key }} | {{#util.val}}{{{modified}}}{{/util.val}} |",
+            "| {{#util.key}}modifier{{/util.key }} | {{#util.val}}{{{modifier}}}{{/util.val}} |",
             "{{#body}}",
-            "│ {{#util.pad}} {{/util.pad                                                   }} │",
-            "│ {{#util.body}}{{{.}}}{{/util.body                                           }} │",
+            "| {{#util.pad}} {{/util.pad                                                   }} |",
+            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
             "{{/body}}",
             "{{/comments}}",
-            "└─{{#util.pad}}─{{/util.pad                                                   }}─┘",
+            "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
 
             "{{/data}}"
         ].join("\n");
