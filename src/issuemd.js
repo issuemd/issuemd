@@ -16,23 +16,23 @@
     }
 
     // when coerced into string, return issue collection as md
-    function toString (collection, cols) {
-        return formatter.string(collection.toArray(), cols);
+    function toString (collection, cols, template_override) {
+        return formatter.string(collection.toArray(), cols, template_override);
     }
 
     // return MD render of all ussues
     // TODO: accept md and merge into collection - perhaps call from main entry point
-    function md(collection, input) {
+    function md(collection, input, template_override) {
         if(typeof input === "string"){
             merger(collection, input);
         } else {
-            return formatter.md(collection.toArray());
+            return formatter.md(collection.toArray(), template_override);
         }
     }
 
     // return HTML render of all issues
-    function html(collection) {
-        return formatter.html(collection.toArray());
+    function html(collection, template_override) {
+        return formatter.html(collection.toArray(), template_override);
     }
 
     // return a deep copy of a collection - breaking references
@@ -314,7 +314,7 @@
     };
 
     // TODO: read in config to set this and other things like it
-    issuemd.version = '0.0.7';
+    issuemd.version = '0.1.0';
 
     // get the core components in place
     issuemd.parser = parser;
