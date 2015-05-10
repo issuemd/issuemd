@@ -5,7 +5,7 @@ module.exports = function () {
         marked = require('../vendor/marked'),
         utils = require('./utils.js');
 
-    var json2html = function (issueJSObject) {
+    var json2html = function (issueJSObject, template_override) {
 
         issueJSObject = utils.arrayWrap(issueJSObject);
 
@@ -18,38 +18,40 @@ module.exports = function () {
             }            
         }
 
+        var template = template_override ? template_override : [
+            "{{#.}}{{#original}}",
+            "<div class='issue'>",
+            "  <h2>{{{title}}}</h2>",
+            "  <ul class='original-attr'>",
+            "    <li><b>creator:</b> {{{creator}}}</li>",
+            "    <li><b>created:</b> {{created}}</li>",
+            "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>",
+            "{{/meta}}  </ul>",
+            "  <div class='original-body'>",
+            "    {{{body}}}  </div>",
+            "{{/original}}{{#updates}}",
+            "  <hr>",
+            "  <ul>",
+            "    <li><b>modified:</b> {{modified}}</li>",
+            "    <li><b>modifier:</b> {{{modifier}}}</li>",
+            "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>{{/meta}}  </ul>",
+            "  <div class='update-body'>",
+            "    {{{body}}}  </div>{{/updates}}",
+            "</div>",
+            "{{/.}}"
+        ].join("\n");
+
         // TODO: read templates from files, not strings
-        return mustache.render([
-                "{{#.}}{{#original}}",
-                "<div class='issue'>",
-                "  <h2>{{{title}}}</h2>",
-                "  <ul class='original-attr'>",
-                "    <li><b>creator:</b> {{{creator}}}</li>",
-                "    <li><b>created:</b> {{created}}</li>",
-                "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>",
-                "{{/meta}}  </ul>",
-                "  <div class='original-body'>",
-                "    {{{body}}}  </div>",
-                "{{/original}}{{#updates}}",
-                "  <hr>",
-                "  <ul>",
-                "    <li><b>modified:</b> {{modified}}</li>",
-                "    <li><b>modifier:</b> {{{modifier}}}</li>",
-                "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>{{/meta}}  </ul>",
-                "  <div class='update-body'>",
-                "    {{{body}}}  </div>{{/updates}}",
-                "</div>",
-                "{{/.}}"
-            ].join("\n"), issue);
+        return mustache.render(template, issue);
 
     };
 
-    var json2md = function (issueJSObject) {
+    var json2md = function (issueJSObject, template_override) {
         if (issueJSObject) {
 
             // use triple `{`s for title/value/body to retain special characters
             // why do I need two newlines inserted before the `---` when there is one already trailing the `body`?
-            var template = [
+            var template = template_override ? template_override : [
                 "{{#.}}{{#original}}",
                 "## {{{title}}}",
                 "+ created: {{created}}",
@@ -81,7 +83,7 @@ module.exports = function () {
         }
     };
 
-    var json2string = function (issueJSObject, cols) {
+    var json2string = function (issueJSObject, cols, template_override) {
 
         function repeat(char, qty){
             var out = '';
@@ -104,7 +106,7 @@ module.exports = function () {
             return output;
         }
 
-        var template = [
+        var template = template_override ? template_override : [
             "{{#data}}",
 
             "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
