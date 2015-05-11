@@ -20,6 +20,11 @@
         return formatter.string(collection.toArray(), cols, template_override);
     }
 
+    // return string summary table of collection
+    function summary(collection, cols, template_override) {
+        return formatter.summary(collection.toArray(), cols, template_override);
+    }
+
     // return MD render of all ussues
     // TODO: accept md and merge into collection - perhaps call from main entry point
     function md(collection, input, template_override) {
@@ -389,6 +394,7 @@
         toString: passThis(toString),
         md: passThis(md),
         html: passThis(html),
+        summary: passThis(summary),
         clone: passThis(clone),
         eq: passThis(eq),
         each: passThis(each),

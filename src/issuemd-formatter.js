@@ -83,15 +83,83 @@ module.exports = function () {
         }
     };
 
-    var json2string = function (issueJSObject, cols, template_override) {
-
-        function repeat(char, qty){
-            var out = '';
-            for(var i=0;i<qty;i++){
-                out += char;
-            }
-            return out;
+    function repeat(char, qty){
+        var out = '';
+        for(var i=0;i<qty;i++){
+            out += char;
         }
+        return out;
+    }
+
+    // TODO: better handling of the widest element
+    var widest=0;
+    var cols=80;
+    var body = function(){ return function(str, render){
+        var content = render(str);
+        return content+repeat(' ',(cols||80)-4-content.length);
+    };};
+
+    var padleft = function(){ return function(str, render){
+        return repeat(render(str), widest);
+    };};
+
+    var padright = function(){ return function(str, render){
+        return repeat(render(str), (cols||80)-widest-7);
+    };};
+
+    var pad = function(){ return function(str, render){
+        return repeat(render(str), (cols||80)-4);
+    };};
+
+    var pad6 = function(){ return function(str, render){
+        return (render(str)+'      ').substr(0,6);
+    };};
+
+    var pad12 = function(){ return function(str, render){
+        return (render(str)+'            ').substr(0,12);
+    };};
+
+    var key = function(){ return function(str, render){
+        var content = render(str);
+        return content+repeat(' ',widest-content.length);
+    };};
+    var val = function(){ return function(str, render){
+        return render(str)+repeat(' ',(cols||80)-7-widest-render(str).length);
+    };};
+
+    var json2summaryTable = function (issueJSObject, cols_in, template_override) {
+        
+        cols = cols_in || cols;
+
+        var data = [];
+        issuemd(issueJSObject).each(function(issue){
+            var attr = issuemd(issue).attr();
+            data.push({
+                title: attr.title,
+                creator: attr.creator,
+                id: attr.id,
+                assignee: attr.assignee,
+                status: attr.status
+            });
+        });
+
+        var template = template_override ? template_override : [
+            '+-{{#util.pad}}-{{/util.pad}}-+',
+            '| {{#util.body}}ID     Assignee     Status   Title{{/util.body}} |',
+            '+-{{#util.pad}}-{{/util.pad}}-+',
+            '{{#data}}',
+            '| {{#util.body}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}} {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.body}} |',
+            '{{/data}}',
+            '+-{{#util.pad}}-{{/util.pad}}-+',
+        ].join('\n');
+
+        return mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright},data:data});
+
+    };
+
+    var json2string = function (issueJSObject, cols_in, template_override) {
+
+        cols = cols_in || cols;
 
         function splitLines(input){
             var output = [];
@@ -138,33 +206,6 @@ module.exports = function () {
             "{{/data}}"
         ].join("\n");
 
-        var body = function(){ return function(str, render){
-            var content = render(str);
-            return content+repeat(' ',(cols||80)-4-content.length);
-        };};
-
-        var padleft = function(){ return function(str, render){
-            return repeat(render(str), widest);
-        };};
-
-        var padright = function(){ return function(str, render){
-            return repeat(render(str), (cols||80)-widest-7);
-        };};
-
-        var pad = function(){ return function(str, render){
-            return repeat(render(str), (cols||80)-4);
-        };};
-
-        // TODO: better handling of the widest element
-        var widest=0;
-        var key = function(){ return function(str, render){
-            var content = render(str);
-            return content+repeat(' ',widest-content.length);
-        };};
-        var val = function(){ return function(str, render){
-            return render(str)+repeat(' ',(cols||80)-7-widest-render(str).length);
-        };};
-
         if (issueJSObject) {
             var out = [], issues = issuemd(issueJSObject);
             issues.each(function(issueJson){
@@ -200,7 +241,8 @@ module.exports = function () {
     return {
         md: json2md,
         html: json2html,
-        string: json2string
+        string: json2string,
+        summary: json2summaryTable
     };
 
 }();
