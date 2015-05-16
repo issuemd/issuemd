@@ -4,7 +4,7 @@
   "description": "issue tracking in hand",
   "main": "dist/issuemd.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "bump": "node ./scripts/bump.js",
     "bump:patch": "node ./scripts/bump.js",
     "bump:major": "node ./scripts/bump.js major",
@@ -31,6 +31,7 @@
     "mustache": "^0.8.2"
   },
   "devDependencies": {
+    "minijasminenode": "1.1.1",
     "browserify": "^7.0.0",
     "gulp-peg": "^0.1.2",
     "gutil": "^1.5.5",
