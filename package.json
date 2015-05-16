@@ -5,6 +5,9 @@
   "main": "dist/issuemd.js",
   "scripts": {
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
+    "test:dist": "ENVIRONMENT=dist npm test",
+    "build": "npm run build:parser && ./node_modules/browserify/bin/cmd.js --standalone issuemd src/issuemd.js --outfile dist/issuemd.js",
+    "build:parser": "./node_modules/pegjs/bin/pegjs src/parser.pegjs dist/parser.js",
     "bump": "node ./scripts/bump.js",
     "bump:patch": "node ./scripts/bump.js",
     "bump:major": "node ./scripts/bump.js major",
@@ -33,9 +36,6 @@
   "devDependencies": {
     "minijasminenode": "1.1.1",
     "browserify": "^7.0.0",
-    "gulp-peg": "^0.1.2",
-    "gutil": "^1.5.5",
-    "vinyl-transform": "^1.0.0",
-    "gulp": "~3.8.11"
+    "pegjs": "~0.8.0"
   }
 }

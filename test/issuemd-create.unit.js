@@ -1,5 +1,5 @@
 // TODO: think about how to handle global `issuemd`
-require('../dist/issuemd.js');
+var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd.js');
 
 describe("issuemd create", function() {
 

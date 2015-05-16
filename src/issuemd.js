@@ -118,20 +118,21 @@
     function updateMeta (collection, obj){
 
         collection.each(function(issue){
+            var hit;
+            function hitness(meta) {
+                if(meta.key === key){
+                    meta.val = val;
+                    hit = true;
+                }
+            }
             for(var key in obj){
                 var val = obj[key];
+                hit = false;
                 if(key === "title" || key === "created" || key === "creator" || key === "body"){
                     issue.original[key] = val;
                 } else {
-                    var hit = false;
                     // check all original meta values
-                    // TODO: refactor so we don't create function in loop
-                    utils.each(issue.original.meta, function(meta) {
-                        if(meta.key === key){
-                            meta.val = val;
-                            hit = true;
-                        }
-                    });
+                    utils.each(issue.original.meta, hitness);
                     if(!hit){
                         issue.original.meta.push({ key: key, val: val });
                     }
