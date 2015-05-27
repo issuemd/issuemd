@@ -247,7 +247,8 @@
         return filterByFunction(collection, function(issue){
             var attr_val = issue.attr(key), match = false;
             issuemd.utils.each(vals, function(val){
-                if(!match && (issuemd.utils.typeof(val) === 'regexp' && val.test(attr_val)) || attr_val === val){
+                // TODO: evaluate value equality test - should we continue to use `toString`?
+                if(!match && (issuemd.utils.typeof(val) === 'regexp' && val.test(attr_val)) || attr_val === val.toString()){
                     match = true;
                     return match;                        
                 }

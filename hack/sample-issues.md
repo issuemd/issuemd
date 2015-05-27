@@ -3,6 +3,7 @@
 + creator: Luka
 + labels: red, green
 + aprettylonglabel: ok ok
++ number: 12
 
 really, this is a totally different
 issue which has a description here
@@ -29,6 +30,7 @@ just a little comment here
 + modified: 2015-05-04 18:53:29
 + modifier: Luka
 + importance: high
++ number: 14
 
 really, this is a totally different asd asdasdasd asdasd asd asdasdasd asdasdasd asdasd asd asd asd asd asdasdasd asd asdasdasd asd asdasd
 issue which has a description here

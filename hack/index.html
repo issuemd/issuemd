@@ -26,11 +26,8 @@
 		parser = PEG.buildParser(g.text);
 		superagent.get('../src/issuemd.js').end(function(e, g){
 			eval(g.text);
-			superagent.get('issuemd-filter.js').end(function(e, g){
+			superagent.get('hack.js').end(function(e, g){
 				eval(g.text);
-				superagent.get('hack.js').end(function(e, g){
-					eval(g.text);
-				});
 			});
 		});
 	});
