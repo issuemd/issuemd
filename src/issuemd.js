@@ -234,8 +234,8 @@
 
     function filterByFunction(collection, filter_function){
         var out = issuemd();
-        collection.each(function(item){
-            if(filter_function(issuemd(item))){
+        collection.each(function(item, index){
+            if(filter_function(issuemd(item), index)){
                 out.merge(item);
             }
         });
