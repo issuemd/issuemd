@@ -6,7 +6,7 @@
   "scripts": {
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
-    "build": "npm run build:parser && ./node_modules/browserify/bin/cmd.js --standalone issuemd src/issuemd.js --outfile dist/issuemd.js",
+    "build": "npm run build:parser && ./node_modules/browserify/bin/cmd.js --standalone issuemd src/issuemd-core.js --outfile dist/issuemd.js",
     "build:parser": "./node_modules/pegjs/bin/pegjs src/parser.pegjs dist/parser.js",
     "bump": "node ./scripts/bump.js",
     "bump:patch": "node ./scripts/bump.js",

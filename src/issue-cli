@@ -1,6 +1,0 @@
-#!/usr/bin/env node
-
-var issuemd = require("./issuemd.js");
-
-// just a proof of concept and sanity check to make sure core library works by way of regular `require` call
-console.log( issuemd({original:{title:"Test issue", creator:"Test Guy (test@example.com)", body:"Justa  sample issue"}}).md() );

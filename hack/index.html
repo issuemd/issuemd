@@ -24,7 +24,7 @@
 	// TODO: tear down the pyramid of doom!
 	superagent.get('../src/parser.pegjs').end(function(e, g){
 		parser = PEG.buildParser(g.text);
-		superagent.get('../src/issuemd.js').end(function(e, g){
+   superagent.get('../src/issuemd-core.js').end(function(e, g){
 			eval(g.text);
 			superagent.get('hack.js').end(function(e, g){
 				eval(g.text);
