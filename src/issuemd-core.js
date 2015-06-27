@@ -61,7 +61,7 @@
 
     // loops over each issue - like underscore's each
     function each(collection, func){
-        utils.each(collection, func);
+        utils.each(collection, function(item){ func(issuemd(item)); });
         return collection;
     }
 
