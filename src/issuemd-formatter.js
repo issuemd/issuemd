@@ -91,9 +91,18 @@ module.exports = function () {
         return out;
     }
 
+    function curtail(input, width){
+        return input.length > width ? input.slice(0, width-3) + '...' : input;
+    }
+
     // TODO: better handling of the widest element
     var widest=0;
     var cols=80;
+    var curtailed = function(){ return function(str, render){
+        var content = render(str);
+        return curtail(content+repeat(' ',(cols||80)-4-content.length), (cols||80)-4);
+    };};
+
     var body = function(){ return function(str, render){
         var content = render(str);
         return content+repeat(' ',(cols||80)-4-content.length);
@@ -145,15 +154,15 @@ module.exports = function () {
 
         var template = template_override ? template_override : [
             '+-{{#util.pad}}-{{/util.pad}}-+',
-            '| {{#util.body}}ID     Assignee     Status   Title{{/util.body}} |',
+            '| {{#util.curtailed}}ID     Assignee     Status       Title{{/util.curtailed}} |',
             '+-{{#util.pad}}-{{/util.pad}}-+',
             '{{#data}}',
-            '| {{#util.body}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}} {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.body}} |',
+            '| {{#util.curtailed}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}} {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.curtailed}} |',
             '{{/data}}',
             '+-{{#util.pad}}-{{/util.pad}}-+',
         ].join('\n');
 
-        return mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright},data:data});
+        return mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright,curtailed:curtailed},data:data});
 
     };
 
