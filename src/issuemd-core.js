@@ -29,7 +29,8 @@
     // TODO: accept md and merge into collection - perhaps call from main entry point
     function md(collection, input, template_override) {
         if(typeof input === "string"){
-            merger(collection, input);
+            return collection.merge(input);
+            // merger(collection[0], issue_array_from_anything(input)[0]);
         } else {
             return formatter.md(collection.toArray(), template_override);
         }
@@ -108,7 +109,7 @@
             }
         }
         // TODO: should default falsy modified value to `now`
-        collection.each(function(issue){
+        utils.each(collection, function(issue){
             issue.updates.push(args);
         });
         return collection;
@@ -117,7 +118,7 @@
     // creates or overwrites existing meta item with new key/val
     function updateMeta (collection, obj){
 
-        collection.each(function(issue){
+        utils.each(collection, function(issue){
             var hit;
             function hitness(meta) {
                 if(meta.key === key){
@@ -235,7 +236,7 @@
     function filterByFunction(collection, filter_function){
         var out = issuemd();
         collection.each(function(item, index){
-            if(filter_function(issuemd(item), index)){
+            if(filter_function(item, index)){
                 out.merge(item);
             }
         });

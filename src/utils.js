@@ -9,7 +9,7 @@ module.exports = {
             if (!y.hasOwnProperty(p)) return false;
             if (x[p] === y[p]) continue;
             if (typeof( x[p] ) !== "object") return false;
-            if (!module.exports.objectsEqual(x[p], y[p])) return false;
+            if (!this.objectsEqual(x[p], y[p])) return false;
         }
         for (p in y) {
             if (y.hasOwnProperty(p) && !x.hasOwnProperty(p)) return false;

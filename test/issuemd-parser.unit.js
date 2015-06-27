@@ -2,7 +2,7 @@ var fixtures = require('./fixtures.js');
 
 describe("issuemd parser", function() {
 
-  var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd.js');
+  var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd-core.js');
 
   it('should parse simple markdown issue', function(){
 
