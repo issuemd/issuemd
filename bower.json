@@ -16,7 +16,8 @@
   "directory": "vendor",
   "dependencies": {
     "marked": "~0.3.3",
-    "mustache": "~2.0.0"
+    "mustache": "~2.0.0",
+    "hogan": "~3.0.2"
   },
   "devDependencies": {
     "pegjs": "~0.8.0",

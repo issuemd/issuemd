@@ -264,8 +264,7 @@
 
     /* helper functions for Issuemd class */
 
-    // TODO: fix this - logic is all wrong - needs to accept any issue-ish things, and return existing issue with intput merged/concatentated into collection
-    // TODO: should this function validate conflicts on original object?
+    // TODO: create validate function to remove duplicates, warn, error out, clean etc... and call from here after merge
     // merges one or more issues from issuePOJO or issueMD into issues
     function localmerge(collection, input){
 
@@ -358,7 +357,6 @@
         // assume input is issue like, and try to return it as a collection
         try {
             var arr = issue_array_from_anything(input);
-            // TODO: use merge here, instead of blindly pushing new issues
             for(var i=0; i<arr.length; i++){
                 localmerge(this, arr[i]);
             }

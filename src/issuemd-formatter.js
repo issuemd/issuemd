@@ -1,9 +1,28 @@
 module.exports = function () {
 
     var mustache = require('../vendor/mustache'),
+        hogan = require('../vendor/hogan'),
         // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
         marked = require('../vendor/marked'),
         utils = require('./utils.js');
+
+    var render_markdown = function(input){
+        return marked(input);
+    };
+
+    var render_mustache = function(template, data){
+        console.log(data)
+        // console.log('>>>>>>>')
+        // console.log(hogan.compile(template).render(data))
+        // console.log(template,data)
+        // console.log('>>>>>>>')
+        // return hogan.compile(template).render(data);
+        if(utils.typeof(data)){
+          return hogan.compile('{{#arr}}'+template+'{{/arr}}').render({arr:data});
+        } else {
+          return hogan.compile(template).render(data);
+        }
+    };
 
     var json2html = function (issueJSObject, template_override) {
 
@@ -15,34 +34,42 @@ module.exports = function () {
             issue[j].original.body = marked(issue[j].original.body);
             for(i = issue[j].updates.length;i--;){
                 issue[j].updates[i].body = marked(issue[j].updates[i].body);
-            }            
+            }
         }
 
         var template = template_override ? template_override : [
-            "{{#.}}{{#original}}",
-            "<div class='issue'>",
-            "  <h2>{{{title}}}</h2>",
-            "  <ul class='original-attr'>",
-            "    <li><b>creator:</b> {{{creator}}}</li>",
-            "    <li><b>created:</b> {{created}}</li>",
-            "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>",
-            "{{/meta}}  </ul>",
-            "  <div class='original-body'>",
+            "{{#.}}",
+            "<div class='issue'>{{#original}}",
+            "<div class='original'>",
+            "  <div class='head'>",
+            "    <h2>{{{title}}}</h2>",
+            "    <ul class='original-attr'>",
+            "      <li><b>creator:</b> {{{creator}}}</li>",
+            "      <li><b>created:</b> {{created}}</li>",
+            "{{#meta}}      <li><b>{{key}}:</b> {{{val}}}</li>",
+            "{{/meta}}    </ul>",
+            "  </div>",
+            "  <div class='body'>",
             "    {{{body}}}  </div>",
+            "</div>",
             "{{/original}}{{#updates}}",
-            "  <hr>",
-            "  <ul>",
+            "<div class='updates'>",
+            "  <hr class='update-divider'>",
+            "  <div class='update'>",
+            "  <ul class='update-attr'>",
             "    <li><b>modified:</b> {{modified}}</li>",
             "    <li><b>modifier:</b> {{{modifier}}}</li>",
             "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>{{/meta}}  </ul>",
             "  <div class='update-body'>",
-            "    {{{body}}}  </div>{{/updates}}",
+            "    {{{body}}}  </div>",
+            "  </div>",
+            "{{/updates}}</div>",
             "</div>",
             "{{/.}}"
         ].join("\n");
 
         // TODO: read templates from files, not strings
-        return mustache.render(template, issue);
+        return render_mustache(template, issue);
 
     };
 
@@ -79,7 +106,7 @@ module.exports = function () {
             ].join("\n");
 
             // TODO: figure out better way to handle trailing newlines after last issue
-            return mustache.render(template, issueJSObject).trim();
+            return render_mustache(template, issueJSObject).trim();
         }
     };
 
@@ -137,7 +164,7 @@ module.exports = function () {
     };};
 
     var json2summaryTable = function (issueJSObject, cols_in, template_override) {
-        
+
         cols = cols_in || cols;
 
         var data = [];
@@ -162,7 +189,7 @@ module.exports = function () {
             '+-{{#util.pad}}-{{/util.pad}}-+',
         ].join('\n');
 
-        return mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright,curtailed:curtailed},data:data});
+        return render_mustache(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright,curtailed:curtailed},data:data});
 
     };
 
@@ -239,7 +266,7 @@ module.exports = function () {
                     data.comments.push(val);
                 });
 
-                out.push(mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,padleft:padleft,padright:padright},data:data}));
+                out.push(render_mustache(template, {util:{body:body,key:key,val:val,pad:pad,padleft:padleft,padright:padright},data:data}));
             });
 
             return out.join('\n');
@@ -248,6 +275,10 @@ module.exports = function () {
     };
 
     return {
+        render: {
+          markdown: render_markdown,
+          mustache: render_mustache
+        },
         md: json2md,
         html: json2html,
         string: json2string,

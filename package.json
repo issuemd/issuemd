@@ -30,12 +30,14 @@
   },
   "homepage": "https://github.com/issuemd/issuemd",
   "dependencies": {
+    "hogan.js": "^3.0.2",
     "marked": "^0.3.2",
     "mustache": "^0.8.2"
   },
   "devDependencies": {
-    "minijasminenode": "1.1.1",
     "browserify": "^7.0.0",
+    "chance": "^0.7.6",
+    "minijasminenode": "1.1.1",
     "pegjs": "~0.8.0"
   }
 }

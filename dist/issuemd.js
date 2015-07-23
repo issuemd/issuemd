@@ -934,302 +934,6 @@ module.exports = (function() {
 })();
 
 },{}],2:[function(require,module,exports){
-module.exports = function () {
-
-    var mustache = require('../vendor/mustache'),
-        // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
-        marked = require('../vendor/marked'),
-        utils = require('./utils.js');
-
-    var json2html = function (issueJSObject, template_override) {
-
-        issueJSObject = utils.arrayWrap(issueJSObject);
-
-        var issue = utils.copy(issueJSObject);
-
-        for(var j = issue.length; j--;){
-            issue[j].original.body = marked(issue[j].original.body);
-            for(i = issue[j].updates.length;i--;){
-                issue[j].updates[i].body = marked(issue[j].updates[i].body);
-            }            
-        }
-
-        var template = template_override ? template_override : [
-            "{{#.}}{{#original}}",
-            "<div class='issue'>",
-            "  <h2>{{{title}}}</h2>",
-            "  <ul class='original-attr'>",
-            "    <li><b>creator:</b> {{{creator}}}</li>",
-            "    <li><b>created:</b> {{created}}</li>",
-            "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>",
-            "{{/meta}}  </ul>",
-            "  <div class='original-body'>",
-            "    {{{body}}}  </div>",
-            "{{/original}}{{#updates}}",
-            "  <hr>",
-            "  <ul>",
-            "    <li><b>modified:</b> {{modified}}</li>",
-            "    <li><b>modifier:</b> {{{modifier}}}</li>",
-            "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>{{/meta}}  </ul>",
-            "  <div class='update-body'>",
-            "    {{{body}}}  </div>{{/updates}}",
-            "</div>",
-            "{{/.}}"
-        ].join("\n");
-
-        // TODO: read templates from files, not strings
-        return mustache.render(template, issue);
-
-    };
-
-    var json2md = function (issueJSObject, template_override) {
-        if (issueJSObject) {
-
-            // use triple `{`s for title/value/body to retain special characters
-            // why do I need two newlines inserted before the `---` when there is one already trailing the `body`?
-            var template = template_override ? template_override : [
-                "{{#.}}{{#original}}",
-                "## {{{title}}}",
-                "+ created: {{created}}",
-                "+ creator: {{{creator}}}",
-                "{{#meta}}",
-                "+ {{key}}: {{{val}}}",
-                "{{/meta}}",
-                "",
-                "{{{body}}}",
-                "{{/original}}{{#updates}}",
-                "",
-                "---",
-                "+ modified: {{modified}}",
-                "+ modifier: {{{modifier}}}",
-                "{{#meta}}",
-                "+ {{key}}: {{{val}}}",
-                "{{/meta}}",
-                "{{#body}}",
-                "",
-                "{{{.}}}",
-                "{{/body}}",
-                "{{/updates}}",
-                "",
-                "{{/.}}"
-            ].join("\n");
-
-            // TODO: figure out better way to handle trailing newlines after last issue
-            return mustache.render(template, issueJSObject).trim();
-        }
-    };
-
-    function repeat(char, qty){
-        var out = '';
-        for(var i=0;i<qty;i++){
-            out += char;
-        }
-        return out;
-    }
-
-    // TODO: better handling of the widest element
-    var widest=0;
-    var cols=80;
-    var body = function(){ return function(str, render){
-        var content = render(str);
-        return content+repeat(' ',(cols||80)-4-content.length);
-    };};
-
-    var padleft = function(){ return function(str, render){
-        return repeat(render(str), widest);
-    };};
-
-    var padright = function(){ return function(str, render){
-        return repeat(render(str), (cols||80)-widest-7);
-    };};
-
-    var pad = function(){ return function(str, render){
-        return repeat(render(str), (cols||80)-4);
-    };};
-
-    var pad6 = function(){ return function(str, render){
-        return (render(str)+'      ').substr(0,6);
-    };};
-
-    var pad12 = function(){ return function(str, render){
-        return (render(str)+'            ').substr(0,12);
-    };};
-
-    var key = function(){ return function(str, render){
-        var content = render(str);
-        return content+repeat(' ',widest-content.length);
-    };};
-    var val = function(){ return function(str, render){
-        return render(str)+repeat(' ',(cols||80)-7-widest-render(str).length);
-    };};
-
-    var json2summaryTable = function (issueJSObject, cols_in, template_override) {
-        
-        cols = cols_in || cols;
-
-        var data = [];
-        issuemd(issueJSObject).each(function(issue){
-            var attr = issuemd(issue).attr();
-            data.push({
-                title: attr.title,
-                creator: attr.creator,
-                id: attr.id,
-                assignee: attr.assignee,
-                status: attr.status
-            });
-        });
-
-        var template = template_override ? template_override : [
-            '+-{{#util.pad}}-{{/util.pad}}-+',
-            '| {{#util.body}}ID     Assignee     Status   Title{{/util.body}} |',
-            '+-{{#util.pad}}-{{/util.pad}}-+',
-            '{{#data}}',
-            '| {{#util.body}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}} {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.body}} |',
-            '{{/data}}',
-            '+-{{#util.pad}}-{{/util.pad}}-+',
-        ].join('\n');
-
-        return mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright},data:data});
-
-    };
-
-    var json2string = function (issueJSObject, cols_in, template_override) {
-
-        cols = cols_in || cols;
-
-        function splitLines(input){
-            var output = [];
-            var lines = utils.wordwrap(input, ((cols||80)-4)).replace(/\n\n+/,'\n\n').split('\n');
-            utils.each(lines, function(item, key){
-                if(item.length < ((cols||80)-4)){
-                    output.push(item);
-                } else {
-                    output = output.concat(item.match(new RegExp('.{1,'+((cols||80)-4)+'}','g')));
-                }
-            });
-            return output;
-        }
-
-        var template = template_override ? template_override : [
-            "{{#data}}",
-
-            "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
-            "{{#title}}",
-            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
-            "{{/title}}",
-            "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
-            "| {{#util.key}}created{{/util.key  }} | {{#util.val}}{{{created}}}{{/util.val }} |",
-            "| {{#util.key}}creator{{/util.key  }} | {{#util.val}}{{{creator}}}{{/util.val }} |",
-            "{{#meta}}",
-            "| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.val}}{{{val}}}{{/util.val     }} |",
-            "{{/meta}}",
-            "| {{#util.pad}} {{/util.pad                                                   }} |",
-            "{{#body}}",
-            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
-            "{{/body}}",
-            "{{#comments}}",
-            "| {{#util.pad}} {{/util.pad                                                   }} |",
-            "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
-            "| {{#util.key}}modified{{/util.key }} | {{#util.val}}{{{modified}}}{{/util.val}} |",
-            "| {{#util.key}}modifier{{/util.key }} | {{#util.val}}{{{modifier}}}{{/util.val}} |",
-            "{{#body}}",
-            "| {{#util.pad}} {{/util.pad                                                   }} |",
-            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
-            "{{/body}}",
-            "{{/comments}}",
-            "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
-
-            "{{/data}}"
-        ].join("\n");
-
-        if (issueJSObject) {
-            var out = [], issues = issuemd(issueJSObject);
-            issues.each(function(issueJson){
-
-                var issue = issuemd(issueJson), data = {meta:[],comments:[]};
-
-                widest=0;
-                utils.each(issue.attr(), function(val, key){
-                    if(key === 'title' || key === 'body'){
-                        data[key] = splitLines(val);
-                    } else if(key === 'created' || key == 'creator'){
-                        data[key] = val;
-                        if(key.length > widest){ widest = key.length; }
-                    } else {
-                        data.meta.push({key:key,val:val});
-                        if(key.length > widest){ widest = key.length; }
-                    }
-                });
-
-                utils.each(issue.comments(), function(val){
-                    val.body = splitLines(val.body);
-                    data.comments.push(val);
-                });
-
-                out.push(mustache.render(template, {util:{body:body,key:key,val:val,pad:pad,padleft:padleft,padright:padright},data:data}));
-            });
-
-            return out.join('\n');
-        }
-
-    };
-
-    return {
-        md: json2md,
-        html: json2html,
-        string: json2string,
-        summary: json2summaryTable
-    };
-
-}();
-},{"../vendor/marked":6,"../vendor/mustache":7,"./utils.js":5}],3:[function(require,module,exports){
-module.exports = function () {
-
-    var utils = require('./utils.js');
-
-    var merge = function (left, right) {
-
-        // TODO: should the merge happen in place or not?
-        // // take copies of inputs
-        // left = utils.copy(left);
-        // right = utils.copy(right);
-
-        var rightComments = utils.copy(right.updates);
-
-        // concat and sort issues
-        var sorted = right.updates ? right.updates.concat(left.updates).sort(function (a, b) {
-            return a.modified > b.modified;
-        }) : left.updates;
-
-        var merged = [];
-        // remove duplicate entries
-        for (var i = 0; i < sorted.length; i++) {
-            if (JSON.stringify(sorted[i]) !== JSON.stringify(sorted[i - 1])) {
-                merged.push(sorted[i]);
-            }
-        }
-
-        // check inequality in issue head
-        left.updates = null;
-        right.updates = null;
-        if (!utils.objectsEqual(left,right)) {
-            // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
-            console.log("issues are not identical - head must not be modified, only updates added");
-        }
-
-        // TODO: better way to ensure updates on right side remain untouched
-        right.updates = rightComments;
-
-        left.updates = merged;
-
-        return left;
-
-    };
-
-    return merge;
-
-}();
-},{"./utils.js":5}],4:[function(require,module,exports){
 // module layout inspired by underscore
 ;(function(){
 
@@ -1261,7 +965,8 @@ module.exports = function () {
     // TODO: accept md and merge into collection - perhaps call from main entry point
     function md(collection, input, template_override) {
         if(typeof input === "string"){
-            merger(collection, input);
+            return collection.merge(input);
+            // merger(collection[0], issue_array_from_anything(input)[0]);
         } else {
             return formatter.md(collection.toArray(), template_override);
         }
@@ -1293,7 +998,7 @@ module.exports = function () {
 
     // loops over each issue - like underscore's each
     function each(collection, func){
-        utils.each(collection, func);
+        utils.each(collection, function(item){ func(issuemd(item)); });
         return collection;
     }
 
@@ -1340,7 +1045,7 @@ module.exports = function () {
             }
         }
         // TODO: should default falsy modified value to `now`
-        collection.each(function(issue){
+        utils.each(collection, function(issue){
             issue.updates.push(args);
         });
         return collection;
@@ -1349,7 +1054,7 @@ module.exports = function () {
     // creates or overwrites existing meta item with new key/val
     function updateMeta (collection, obj){
 
-        collection.each(function(issue){
+        utils.each(collection, function(issue){
             var hit;
             function hitness(meta) {
                 if(meta.key === key){
@@ -1466,8 +1171,8 @@ module.exports = function () {
 
     function filterByFunction(collection, filter_function){
         var out = issuemd();
-        collection.each(function(item){
-            if(filter_function(issuemd(item))){
+        collection.each(function(item, index){
+            if(filter_function(item, index)){
                 out.merge(item);
             }
         });
@@ -1479,7 +1184,8 @@ module.exports = function () {
         return filterByFunction(collection, function(issue){
             var attr_val = issue.attr(key), match = false;
             issuemd.utils.each(vals, function(val){
-                if(!match && (issuemd.utils.typeof(val) === 'regexp' && val.test(attr_val)) || attr_val === val){
+                // TODO: evaluate value equality test - should we continue to use `toString`?
+                if(!match && (issuemd.utils.typeof(val) === 'regexp' && val.test(attr_val)) || attr_val === val.toString()){
                     match = true;
                     return match;                        
                 }
@@ -1494,8 +1200,7 @@ module.exports = function () {
 
     /* helper functions for Issuemd class */
 
-    // TODO: fix this - logic is all wrong - needs to accept any issue-ish things, and return existing issue with intput merged/concatentated into collection
-    // TODO: should this function validate conflicts on original object?
+    // TODO: create validate function to remove duplicates, warn, error out, clean etc... and call from here after merge
     // merges one or more issues from issuePOJO or issueMD into issues
     function localmerge(collection, input){
 
@@ -1588,7 +1293,6 @@ module.exports = function () {
         // assume input is issue like, and try to return it as a collection
         try {
             var arr = issue_array_from_anything(input);
-            // TODO: use merge here, instead of blindly pushing new issues
             for(var i=0; i<arr.length; i++){
                 localmerge(this, arr[i]);
             }
@@ -1659,7 +1363,344 @@ module.exports = function () {
 
 }.call(this));
 
-},{"../dist/parser.js":1,"./issuemd-formatter.js":2,"./issuemd-merger.js":3,"./utils.js":5}],5:[function(require,module,exports){
+},{"../dist/parser.js":1,"./issuemd-formatter.js":3,"./issuemd-merger.js":4,"./utils.js":5}],3:[function(require,module,exports){
+module.exports = function () {
+
+    var mustache = require('../vendor/mustache'),
+        hogan = require('../vendor/hogan'),
+        // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
+        marked = require('../vendor/marked'),
+        utils = require('./utils.js');
+
+    var render_markdown = function(input){
+        return marked(input);
+    };
+
+    var render_mustache = function(template, data){
+        console.log(data)
+        // console.log('>>>>>>>')
+        // console.log(hogan.compile(template).render(data))
+        // console.log(template,data)
+        // console.log('>>>>>>>')
+        // return hogan.compile(template).render(data);
+        if(utils.typeof(data)){
+          return hogan.compile('{{#arr}}'+template+'{{/arr}}').render({arr:data});
+        } else {
+          return hogan.compile(template).render(data);
+        }
+    };
+
+    var json2html = function (issueJSObject, template_override) {
+
+        issueJSObject = utils.arrayWrap(issueJSObject);
+
+        var issue = utils.copy(issueJSObject);
+
+        for(var j = issue.length; j--;){
+            issue[j].original.body = marked(issue[j].original.body);
+            for(i = issue[j].updates.length;i--;){
+                issue[j].updates[i].body = marked(issue[j].updates[i].body);
+            }
+        }
+
+        var template = template_override ? template_override : [
+            "{{#.}}",
+            "<div class='issue'>{{#original}}",
+            "<div class='original'>",
+            "  <div class='head'>",
+            "    <h2>{{{title}}}</h2>",
+            "    <ul class='original-attr'>",
+            "      <li><b>creator:</b> {{{creator}}}</li>",
+            "      <li><b>created:</b> {{created}}</li>",
+            "{{#meta}}      <li><b>{{key}}:</b> {{{val}}}</li>",
+            "{{/meta}}    </ul>",
+            "  </div>",
+            "  <div class='body'>",
+            "    {{{body}}}  </div>",
+            "</div>",
+            "{{/original}}{{#updates}}",
+            "<div class='updates'>",
+            "  <hr class='update-divider'>",
+            "  <div class='update'>",
+            "  <ul class='update-attr'>",
+            "    <li><b>modified:</b> {{modified}}</li>",
+            "    <li><b>modifier:</b> {{{modifier}}}</li>",
+            "{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>{{/meta}}  </ul>",
+            "  <div class='update-body'>",
+            "    {{{body}}}  </div>",
+            "  </div>",
+            "{{/updates}}</div>",
+            "</div>",
+            "{{/.}}"
+        ].join("\n");
+
+        // TODO: read templates from files, not strings
+        return render_mustache(template, issue);
+
+    };
+
+    var json2md = function (issueJSObject, template_override) {
+        if (issueJSObject) {
+
+            // use triple `{`s for title/value/body to retain special characters
+            // why do I need two newlines inserted before the `---` when there is one already trailing the `body`?
+            var template = template_override ? template_override : [
+                "{{#.}}{{#original}}",
+                "## {{{title}}}",
+                "+ created: {{created}}",
+                "+ creator: {{{creator}}}",
+                "{{#meta}}",
+                "+ {{key}}: {{{val}}}",
+                "{{/meta}}",
+                "",
+                "{{{body}}}",
+                "{{/original}}{{#updates}}",
+                "",
+                "---",
+                "+ modified: {{modified}}",
+                "+ modifier: {{{modifier}}}",
+                "{{#meta}}",
+                "+ {{key}}: {{{val}}}",
+                "{{/meta}}",
+                "{{#body}}",
+                "",
+                "{{{.}}}",
+                "{{/body}}",
+                "{{/updates}}",
+                "",
+                "{{/.}}"
+            ].join("\n");
+
+            // TODO: figure out better way to handle trailing newlines after last issue
+            return render_mustache(template, issueJSObject).trim();
+        }
+    };
+
+    function repeat(char, qty){
+        var out = '';
+        for(var i=0;i<qty;i++){
+            out += char;
+        }
+        return out;
+    }
+
+    function curtail(input, width){
+        return input.length > width ? input.slice(0, width-3) + '...' : input;
+    }
+
+    // TODO: better handling of the widest element
+    var widest=0;
+    var cols=80;
+    var curtailed = function(){ return function(str, render){
+        var content = render(str);
+        return curtail(content+repeat(' ',(cols||80)-4-content.length), (cols||80)-4);
+    };};
+
+    var body = function(){ return function(str, render){
+        var content = render(str);
+        return content+repeat(' ',(cols||80)-4-content.length);
+    };};
+
+    var padleft = function(){ return function(str, render){
+        return repeat(render(str), widest);
+    };};
+
+    var padright = function(){ return function(str, render){
+        return repeat(render(str), (cols||80)-widest-7);
+    };};
+
+    var pad = function(){ return function(str, render){
+        return repeat(render(str), (cols||80)-4);
+    };};
+
+    var pad6 = function(){ return function(str, render){
+        return (render(str)+'      ').substr(0,6);
+    };};
+
+    var pad12 = function(){ return function(str, render){
+        return (render(str)+'            ').substr(0,12);
+    };};
+
+    var key = function(){ return function(str, render){
+        var content = render(str);
+        return content+repeat(' ',widest-content.length);
+    };};
+    var val = function(){ return function(str, render){
+        return render(str)+repeat(' ',(cols||80)-7-widest-render(str).length);
+    };};
+
+    var json2summaryTable = function (issueJSObject, cols_in, template_override) {
+
+        cols = cols_in || cols;
+
+        var data = [];
+        issuemd(issueJSObject).each(function(issue){
+            var attr = issuemd(issue).attr();
+            data.push({
+                title: attr.title,
+                creator: attr.creator,
+                id: attr.id,
+                assignee: attr.assignee,
+                status: attr.status
+            });
+        });
+
+        var template = template_override ? template_override : [
+            '+-{{#util.pad}}-{{/util.pad}}-+',
+            '| {{#util.curtailed}}ID     Assignee     Status       Title{{/util.curtailed}} |',
+            '+-{{#util.pad}}-{{/util.pad}}-+',
+            '{{#data}}',
+            '| {{#util.curtailed}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}} {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.curtailed}} |',
+            '{{/data}}',
+            '+-{{#util.pad}}-{{/util.pad}}-+',
+        ].join('\n');
+
+        return render_mustache(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright,curtailed:curtailed},data:data});
+
+    };
+
+    var json2string = function (issueJSObject, cols_in, template_override) {
+
+        cols = cols_in || cols;
+
+        function splitLines(input){
+            var output = [];
+            var lines = utils.wordwrap(input, ((cols||80)-4)).replace(/\n\n+/,'\n\n').split('\n');
+            utils.each(lines, function(item, key){
+                if(item.length < ((cols||80)-4)){
+                    output.push(item);
+                } else {
+                    output = output.concat(item.match(new RegExp('.{1,'+((cols||80)-4)+'}','g')));
+                }
+            });
+            return output;
+        }
+
+        var template = template_override ? template_override : [
+            "{{#data}}",
+
+            "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
+            "{{#title}}",
+            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
+            "{{/title}}",
+            "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
+            "| {{#util.key}}created{{/util.key  }} | {{#util.val}}{{{created}}}{{/util.val }} |",
+            "| {{#util.key}}creator{{/util.key  }} | {{#util.val}}{{{creator}}}{{/util.val }} |",
+            "{{#meta}}",
+            "| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.val}}{{{val}}}{{/util.val     }} |",
+            "{{/meta}}",
+            "| {{#util.pad}} {{/util.pad                                                   }} |",
+            "{{#body}}",
+            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
+            "{{/body}}",
+            "{{#comments}}",
+            "| {{#util.pad}} {{/util.pad                                                   }} |",
+            "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
+            "| {{#util.key}}modified{{/util.key }} | {{#util.val}}{{{modified}}}{{/util.val}} |",
+            "| {{#util.key}}modifier{{/util.key }} | {{#util.val}}{{{modifier}}}{{/util.val}} |",
+            "{{#body}}",
+            "| {{#util.pad}} {{/util.pad                                                   }} |",
+            "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
+            "{{/body}}",
+            "{{/comments}}",
+            "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
+
+            "{{/data}}"
+        ].join("\n");
+
+        if (issueJSObject) {
+            var out = [], issues = issuemd(issueJSObject);
+            issues.each(function(issueJson){
+
+                var issue = issuemd(issueJson), data = {meta:[],comments:[]};
+
+                widest=0;
+                utils.each(issue.attr(), function(val, key){
+                    if(key === 'title' || key === 'body'){
+                        data[key] = splitLines(val);
+                    } else if(key === 'created' || key == 'creator'){
+                        data[key] = val;
+                        if(key.length > widest){ widest = key.length; }
+                    } else {
+                        data.meta.push({key:key,val:val});
+                        if(key.length > widest){ widest = key.length; }
+                    }
+                });
+
+                utils.each(issue.comments(), function(val){
+                    val.body = splitLines(val.body);
+                    data.comments.push(val);
+                });
+
+                out.push(render_mustache(template, {util:{body:body,key:key,val:val,pad:pad,padleft:padleft,padright:padright},data:data}));
+            });
+
+            return out.join('\n');
+        }
+
+    };
+
+    return {
+        render: {
+          markdown: render_markdown,
+          mustache: render_mustache
+        },
+        md: json2md,
+        html: json2html,
+        string: json2string,
+        summary: json2summaryTable
+    };
+
+}();
+
+},{"../vendor/hogan":7,"../vendor/marked":9,"../vendor/mustache":10,"./utils.js":5}],4:[function(require,module,exports){
+module.exports = function () {
+
+    var utils = require('./utils.js');
+
+    var merge = function (left, right) {
+
+        // TODO: should the merge happen in place or not?
+        // // take copies of inputs
+        // left = utils.copy(left);
+        // right = utils.copy(right);
+
+        var rightComments = utils.copy(right.updates);
+
+        // concat and sort issues
+        var sorted = right.updates ? right.updates.concat(left.updates).sort(function (a, b) {
+            return a.modified > b.modified;
+        }) : left.updates;
+
+        var merged = [];
+        // remove duplicate entries
+        for (var i = 0; i < sorted.length; i++) {
+            if (JSON.stringify(sorted[i]) !== JSON.stringify(sorted[i - 1])) {
+                merged.push(sorted[i]);
+            }
+        }
+
+        // check inequality in issue head
+        left.updates = null;
+        right.updates = null;
+        if (!utils.objectsEqual(left,right)) {
+            // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
+            console.log("issues are not identical - head must not be modified, only updates added");
+        }
+
+        // TODO: better way to ensure updates on right side remain untouched
+        right.updates = rightComments;
+
+        left.updates = merged;
+
+        return left;
+
+    };
+
+    return merge;
+
+}();
+},{"./utils.js":5}],5:[function(require,module,exports){
 module.exports = {
     // inspired by: http://stackoverflow.com/a/6713782/665261
     objectsEqual: function (x, y) {
@@ -1671,7 +1712,7 @@ module.exports = {
             if (!y.hasOwnProperty(p)) return false;
             if (x[p] === y[p]) continue;
             if (typeof( x[p] ) !== "object") return false;
-            if (!module.exports.objectsEqual(x[p], y[p])) return false;
+            if (!this.objectsEqual(x[p], y[p])) return false;
         }
         for (p in y) {
             if (y.hasOwnProperty(p) && !x.hasOwnProperty(p)) return false;
@@ -1793,6 +1834,797 @@ module.exports = {
     }
 };
 },{}],6:[function(require,module,exports){
+/*
+ *  Copyright 2011 Twitter, Inc.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+(function (Hogan) {
+  // Setup regex  assignments
+  // remove whitespace according to Mustache spec
+  var rIsWhitespace = /\S/,
+      rQuot = /\"/g,
+      rNewline =  /\n/g,
+      rCr = /\r/g,
+      rSlash = /\\/g,
+      rLineSep = /\u2028/,
+      rParagraphSep = /\u2029/;
+
+  Hogan.tags = {
+    '#': 1, '^': 2, '<': 3, '$': 4,
+    '/': 5, '!': 6, '>': 7, '=': 8, '_v': 9,
+    '{': 10, '&': 11, '_t': 12
+  };
+
+  Hogan.scan = function scan(text, delimiters) {
+    var len = text.length,
+        IN_TEXT = 0,
+        IN_TAG_TYPE = 1,
+        IN_TAG = 2,
+        state = IN_TEXT,
+        tagType = null,
+        tag = null,
+        buf = '',
+        tokens = [],
+        seenTag = false,
+        i = 0,
+        lineStart = 0,
+        otag = '{{',
+        ctag = '}}';
+
+    function addBuf() {
+      if (buf.length > 0) {
+        tokens.push({tag: '_t', text: new String(buf)});
+        buf = '';
+      }
+    }
+
+    function lineIsWhitespace() {
+      var isAllWhitespace = true;
+      for (var j = lineStart; j < tokens.length; j++) {
+        isAllWhitespace =
+          (Hogan.tags[tokens[j].tag] < Hogan.tags['_v']) ||
+          (tokens[j].tag == '_t' && tokens[j].text.match(rIsWhitespace) === null);
+        if (!isAllWhitespace) {
+          return false;
+        }
+      }
+
+      return isAllWhitespace;
+    }
+
+    function filterLine(haveSeenTag, noNewLine) {
+      addBuf();
+
+      if (haveSeenTag && lineIsWhitespace()) {
+        for (var j = lineStart, next; j < tokens.length; j++) {
+          if (tokens[j].text) {
+            if ((next = tokens[j+1]) && next.tag == '>') {
+              // set indent to token value
+              next.indent = tokens[j].text.toString()
+            }
+            tokens.splice(j, 1);
+          }
+        }
+      } else if (!noNewLine) {
+        tokens.push({tag:'\n'});
+      }
+
+      seenTag = false;
+      lineStart = tokens.length;
+    }
+
+    function changeDelimiters(text, index) {
+      var close = '=' + ctag,
+          closeIndex = text.indexOf(close, index),
+          delimiters = trim(
+            text.substring(text.indexOf('=', index) + 1, closeIndex)
+          ).split(' ');
+
+      otag = delimiters[0];
+      ctag = delimiters[delimiters.length - 1];
+
+      return closeIndex + close.length - 1;
+    }
+
+    if (delimiters) {
+      delimiters = delimiters.split(' ');
+      otag = delimiters[0];
+      ctag = delimiters[1];
+    }
+
+    for (i = 0; i < len; i++) {
+      if (state == IN_TEXT) {
+        if (tagChange(otag, text, i)) {
+          --i;
+          addBuf();
+          state = IN_TAG_TYPE;
+        } else {
+          if (text.charAt(i) == '\n') {
+            filterLine(seenTag);
+          } else {
+            buf += text.charAt(i);
+          }
+        }
+      } else if (state == IN_TAG_TYPE) {
+        i += otag.length - 1;
+        tag = Hogan.tags[text.charAt(i + 1)];
+        tagType = tag ? text.charAt(i + 1) : '_v';
+        if (tagType == '=') {
+          i = changeDelimiters(text, i);
+          state = IN_TEXT;
+        } else {
+          if (tag) {
+            i++;
+          }
+          state = IN_TAG;
+        }
+        seenTag = i;
+      } else {
+        if (tagChange(ctag, text, i)) {
+          tokens.push({tag: tagType, n: trim(buf), otag: otag, ctag: ctag,
+                       i: (tagType == '/') ? seenTag - otag.length : i + ctag.length});
+          buf = '';
+          i += ctag.length - 1;
+          state = IN_TEXT;
+          if (tagType == '{') {
+            if (ctag == '}}') {
+              i++;
+            } else {
+              cleanTripleStache(tokens[tokens.length - 1]);
+            }
+          }
+        } else {
+          buf += text.charAt(i);
+        }
+      }
+    }
+
+    filterLine(seenTag, true);
+
+    return tokens;
+  }
+
+  function cleanTripleStache(token) {
+    if (token.n.substr(token.n.length - 1) === '}') {
+      token.n = token.n.substring(0, token.n.length - 1);
+    }
+  }
+
+  function trim(s) {
+    if (s.trim) {
+      return s.trim();
+    }
+
+    return s.replace(/^\s*|\s*$/g, '');
+  }
+
+  function tagChange(tag, text, index) {
+    if (text.charAt(index) != tag.charAt(0)) {
+      return false;
+    }
+
+    for (var i = 1, l = tag.length; i < l; i++) {
+      if (text.charAt(index + i) != tag.charAt(i)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // the tags allowed inside super templates
+  var allowedInSuper = {'_t': true, '\n': true, '$': true, '/': true};
+
+  function buildTree(tokens, kind, stack, customTags) {
+    var instructions = [],
+        opener = null,
+        tail = null,
+        token = null;
+
+    tail = stack[stack.length - 1];
+
+    while (tokens.length > 0) {
+      token = tokens.shift();
+
+      if (tail && tail.tag == '<' && !(token.tag in allowedInSuper)) {
+        throw new Error('Illegal content in < super tag.');
+      }
+
+      if (Hogan.tags[token.tag] <= Hogan.tags['$'] || isOpener(token, customTags)) {
+        stack.push(token);
+        token.nodes = buildTree(tokens, token.tag, stack, customTags);
+      } else if (token.tag == '/') {
+        if (stack.length === 0) {
+          throw new Error('Closing tag without opener: /' + token.n);
+        }
+        opener = stack.pop();
+        if (token.n != opener.n && !isCloser(token.n, opener.n, customTags)) {
+          throw new Error('Nesting error: ' + opener.n + ' vs. ' + token.n);
+        }
+        opener.end = token.i;
+        return instructions;
+      } else if (token.tag == '\n') {
+        token.last = (tokens.length == 0) || (tokens[0].tag == '\n');
+      }
+
+      instructions.push(token);
+    }
+
+    if (stack.length > 0) {
+      throw new Error('missing closing tag: ' + stack.pop().n);
+    }
+
+    return instructions;
+  }
+
+  function isOpener(token, tags) {
+    for (var i = 0, l = tags.length; i < l; i++) {
+      if (tags[i].o == token.n) {
+        token.tag = '#';
+        return true;
+      }
+    }
+  }
+
+  function isCloser(close, open, tags) {
+    for (var i = 0, l = tags.length; i < l; i++) {
+      if (tags[i].c == close && tags[i].o == open) {
+        return true;
+      }
+    }
+  }
+
+  function stringifySubstitutions(obj) {
+    var items = [];
+    for (var key in obj) {
+      items.push('"' + esc(key) + '": function(c,p,t,i) {' + obj[key] + '}');
+    }
+    return "{ " + items.join(",") + " }";
+  }
+
+  function stringifyPartials(codeObj) {
+    var partials = [];
+    for (var key in codeObj.partials) {
+      partials.push('"' + esc(key) + '":{name:"' + esc(codeObj.partials[key].name) + '", ' + stringifyPartials(codeObj.partials[key]) + "}");
+    }
+    return "partials: {" + partials.join(",") + "}, subs: " + stringifySubstitutions(codeObj.subs);
+  }
+
+  Hogan.stringify = function(codeObj, text, options) {
+    return "{code: function (c,p,i) { " + Hogan.wrapMain(codeObj.code) + " }," + stringifyPartials(codeObj) +  "}";
+  }
+
+  var serialNo = 0;
+  Hogan.generate = function(tree, text, options) {
+    serialNo = 0;
+    var context = { code: '', subs: {}, partials: {} };
+    Hogan.walk(tree, context);
+
+    if (options.asString) {
+      return this.stringify(context, text, options);
+    }
+
+    return this.makeTemplate(context, text, options);
+  }
+
+  Hogan.wrapMain = function(code) {
+    return 'var t=this;t.b(i=i||"");' + code + 'return t.fl();';
+  }
+
+  Hogan.template = Hogan.Template;
+
+  Hogan.makeTemplate = function(codeObj, text, options) {
+    var template = this.makePartials(codeObj);
+    template.code = new Function('c', 'p', 'i', this.wrapMain(codeObj.code));
+    return new this.template(template, text, this, options);
+  }
+
+  Hogan.makePartials = function(codeObj) {
+    var key, template = {subs: {}, partials: codeObj.partials, name: codeObj.name};
+    for (key in template.partials) {
+      template.partials[key] = this.makePartials(template.partials[key]);
+    }
+    for (key in codeObj.subs) {
+      template.subs[key] = new Function('c', 'p', 't', 'i', codeObj.subs[key]);
+    }
+    return template;
+  }
+
+  function esc(s) {
+    return s.replace(rSlash, '\\\\')
+            .replace(rQuot, '\\\"')
+            .replace(rNewline, '\\n')
+            .replace(rCr, '\\r')
+            .replace(rLineSep, '\\u2028')
+            .replace(rParagraphSep, '\\u2029');
+  }
+
+  function chooseMethod(s) {
+    return (~s.indexOf('.')) ? 'd' : 'f';
+  }
+
+  function createPartial(node, context) {
+    var prefix = "<" + (context.prefix || "");
+    var sym = prefix + node.n + serialNo++;
+    context.partials[sym] = {name: node.n, partials: {}};
+    context.code += 't.b(t.rp("' +  esc(sym) + '",c,p,"' + (node.indent || '') + '"));';
+    return sym;
+  }
+
+  Hogan.codegen = {
+    '#': function(node, context) {
+      context.code += 'if(t.s(t.' + chooseMethod(node.n) + '("' + esc(node.n) + '",c,p,1),' +
+                      'c,p,0,' + node.i + ',' + node.end + ',"' + node.otag + " " + node.ctag + '")){' +
+                      't.rs(c,p,' + 'function(c,p,t){';
+      Hogan.walk(node.nodes, context);
+      context.code += '});c.pop();}';
+    },
+
+    '^': function(node, context) {
+      context.code += 'if(!t.s(t.' + chooseMethod(node.n) + '("' + esc(node.n) + '",c,p,1),c,p,1,0,0,"")){';
+      Hogan.walk(node.nodes, context);
+      context.code += '};';
+    },
+
+    '>': createPartial,
+    '<': function(node, context) {
+      var ctx = {partials: {}, code: '', subs: {}, inPartial: true};
+      Hogan.walk(node.nodes, ctx);
+      var template = context.partials[createPartial(node, context)];
+      template.subs = ctx.subs;
+      template.partials = ctx.partials;
+    },
+
+    '$': function(node, context) {
+      var ctx = {subs: {}, code: '', partials: context.partials, prefix: node.n};
+      Hogan.walk(node.nodes, ctx);
+      context.subs[node.n] = ctx.code;
+      if (!context.inPartial) {
+        context.code += 't.sub("' + esc(node.n) + '",c,p,i);';
+      }
+    },
+
+    '\n': function(node, context) {
+      context.code += write('"\\n"' + (node.last ? '' : ' + i'));
+    },
+
+    '_v': function(node, context) {
+      context.code += 't.b(t.v(t.' + chooseMethod(node.n) + '("' + esc(node.n) + '",c,p,0)));';
+    },
+
+    '_t': function(node, context) {
+      context.code += write('"' + esc(node.text) + '"');
+    },
+
+    '{': tripleStache,
+
+    '&': tripleStache
+  }
+
+  function tripleStache(node, context) {
+    context.code += 't.b(t.t(t.' + chooseMethod(node.n) + '("' + esc(node.n) + '",c,p,0)));';
+  }
+
+  function write(s) {
+    return 't.b(' + s + ');';
+  }
+
+  Hogan.walk = function(nodelist, context) {
+    var func;
+    for (var i = 0, l = nodelist.length; i < l; i++) {
+      func = Hogan.codegen[nodelist[i].tag];
+      func && func(nodelist[i], context);
+    }
+    return context;
+  }
+
+  Hogan.parse = function(tokens, text, options) {
+    options = options || {};
+    return buildTree(tokens, '', [], options.sectionTags || []);
+  }
+
+  Hogan.cache = {};
+
+  Hogan.cacheKey = function(text, options) {
+    return [text, !!options.asString, !!options.disableLambda, options.delimiters, !!options.modelGet].join('||');
+  }
+
+  Hogan.compile = function(text, options) {
+    options = options || {};
+    var key = Hogan.cacheKey(text, options);
+    var template = this.cache[key];
+
+    if (template) {
+      var partials = template.partials;
+      for (var name in partials) {
+        delete partials[name].instance;
+      }
+      return template;
+    }
+
+    template = this.generate(this.parse(this.scan(text, options.delimiters), text, options), text, options);
+    return this.cache[key] = template;
+  }
+})(typeof exports !== 'undefined' ? exports : Hogan);
+
+},{}],7:[function(require,module,exports){
+/*
+ *  Copyright 2011 Twitter, Inc.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+// This file is for use with Node.js. See dist/ for browser files.
+
+var Hogan = require('./compiler');
+Hogan.Template = require('./template').Template;
+Hogan.template = Hogan.Template;
+module.exports = Hogan;
+
+},{"./compiler":6,"./template":8}],8:[function(require,module,exports){
+/*
+ *  Copyright 2011 Twitter, Inc.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+var Hogan = {};
+
+(function (Hogan) {
+  Hogan.Template = function (codeObj, text, compiler, options) {
+    codeObj = codeObj || {};
+    this.r = codeObj.code || this.r;
+    this.c = compiler;
+    this.options = options || {};
+    this.text = text || '';
+    this.partials = codeObj.partials || {};
+    this.subs = codeObj.subs || {};
+    this.buf = '';
+  }
+
+  Hogan.Template.prototype = {
+    // render: replaced by generated code.
+    r: function (context, partials, indent) { return ''; },
+
+    // variable escaping
+    v: hoganEscape,
+
+    // triple stache
+    t: coerceToString,
+
+    render: function render(context, partials, indent) {
+      return this.ri([context], partials || {}, indent);
+    },
+
+    // render internal -- a hook for overrides that catches partials too
+    ri: function (context, partials, indent) {
+      return this.r(context, partials, indent);
+    },
+
+    // ensurePartial
+    ep: function(symbol, partials) {
+      var partial = this.partials[symbol];
+
+      // check to see that if we've instantiated this partial before
+      var template = partials[partial.name];
+      if (partial.instance && partial.base == template) {
+        return partial.instance;
+      }
+
+      if (typeof template == 'string') {
+        if (!this.c) {
+          throw new Error("No compiler available.");
+        }
+        template = this.c.compile(template, this.options);
+      }
+
+      if (!template) {
+        return null;
+      }
+
+      // We use this to check whether the partials dictionary has changed
+      this.partials[symbol].base = template;
+
+      if (partial.subs) {
+        // Make sure we consider parent template now
+        if (!partials.stackText) partials.stackText = {};
+        for (key in partial.subs) {
+          if (!partials.stackText[key]) {
+            partials.stackText[key] = (this.activeSub !== undefined && partials.stackText[this.activeSub]) ? partials.stackText[this.activeSub] : this.text;
+          }
+        }
+        template = createSpecializedPartial(template, partial.subs, partial.partials,
+          this.stackSubs, this.stackPartials, partials.stackText);
+      }
+      this.partials[symbol].instance = template;
+
+      return template;
+    },
+
+    // tries to find a partial in the current scope and render it
+    rp: function(symbol, context, partials, indent) {
+      var partial = this.ep(symbol, partials);
+      if (!partial) {
+        return '';
+      }
+
+      return partial.ri(context, partials, indent);
+    },
+
+    // render a section
+    rs: function(context, partials, section) {
+      var tail = context[context.length - 1];
+
+      if (!isArray(tail)) {
+        section(context, partials, this);
+        return;
+      }
+
+      for (var i = 0; i < tail.length; i++) {
+        context.push(tail[i]);
+        section(context, partials, this);
+        context.pop();
+      }
+    },
+
+    // maybe start a section
+    s: function(val, ctx, partials, inverted, start, end, tags) {
+      var pass;
+
+      if (isArray(val) && val.length === 0) {
+        return false;
+      }
+
+      if (typeof val == 'function') {
+        val = this.ms(val, ctx, partials, inverted, start, end, tags);
+      }
+
+      pass = !!val;
+
+      if (!inverted && pass && ctx) {
+        ctx.push((typeof val == 'object') ? val : ctx[ctx.length - 1]);
+      }
+
+      return pass;
+    },
+
+    // find values with dotted names
+    d: function(key, ctx, partials, returnFound) {
+      var found,
+          names = key.split('.'),
+          val = this.f(names[0], ctx, partials, returnFound),
+          doModelGet = this.options.modelGet,
+          cx = null;
+
+      if (key === '.' && isArray(ctx[ctx.length - 2])) {
+        val = ctx[ctx.length - 1];
+      } else {
+        for (var i = 1; i < names.length; i++) {
+          found = findInScope(names[i], val, doModelGet);
+          if (found !== undefined) {
+            cx = val;
+            val = found;
+          } else {
+            val = '';
+          }
+        }
+      }
+
+      if (returnFound && !val) {
+        return false;
+      }
+
+      if (!returnFound && typeof val == 'function') {
+        ctx.push(cx);
+        val = this.mv(val, ctx, partials);
+        ctx.pop();
+      }
+
+      return val;
+    },
+
+    // find values with normal names
+    f: function(key, ctx, partials, returnFound) {
+      var val = false,
+          v = null,
+          found = false,
+          doModelGet = this.options.modelGet;
+
+      for (var i = ctx.length - 1; i >= 0; i--) {
+        v = ctx[i];
+        val = findInScope(key, v, doModelGet);
+        if (val !== undefined) {
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        return (returnFound) ? false : "";
+      }
+
+      if (!returnFound && typeof val == 'function') {
+        val = this.mv(val, ctx, partials);
+      }
+
+      return val;
+    },
+
+    // higher order templates
+    ls: function(func, cx, partials, text, tags) {
+      var oldTags = this.options.delimiters;
+
+      this.options.delimiters = tags;
+      this.b(this.ct(coerceToString(func.call(cx, text)), cx, partials));
+      this.options.delimiters = oldTags;
+
+      return false;
+    },
+
+    // compile text
+    ct: function(text, cx, partials) {
+      if (this.options.disableLambda) {
+        throw new Error('Lambda features disabled.');
+      }
+      return this.c.compile(text, this.options).render(cx, partials);
+    },
+
+    // template result buffering
+    b: function(s) { this.buf += s; },
+
+    fl: function() { var r = this.buf; this.buf = ''; return r; },
+
+    // method replace section
+    ms: function(func, ctx, partials, inverted, start, end, tags) {
+      var textSource,
+          cx = ctx[ctx.length - 1],
+          result = func.call(cx);
+
+      if (typeof result == 'function') {
+        if (inverted) {
+          return true;
+        } else {
+          textSource = (this.activeSub && this.subsText && this.subsText[this.activeSub]) ? this.subsText[this.activeSub] : this.text;
+          return this.ls(result, cx, partials, textSource.substring(start, end), tags);
+        }
+      }
+
+      return result;
+    },
+
+    // method replace variable
+    mv: function(func, ctx, partials) {
+      var cx = ctx[ctx.length - 1];
+      var result = func.call(cx);
+
+      if (typeof result == 'function') {
+        return this.ct(coerceToString(result.call(cx)), cx, partials);
+      }
+
+      return result;
+    },
+
+    sub: function(name, context, partials, indent) {
+      var f = this.subs[name];
+      if (f) {
+        this.activeSub = name;
+        f(context, partials, this, indent);
+        this.activeSub = false;
+      }
+    }
+
+  };
+
+  //Find a key in an object
+  function findInScope(key, scope, doModelGet) {
+    var val;
+
+    if (scope && typeof scope == 'object') {
+
+      if (scope[key] !== undefined) {
+        val = scope[key];
+
+      // try lookup with get for backbone or similar model data
+      } else if (doModelGet && scope.get && typeof scope.get == 'function') {
+        val = scope.get(key);
+      }
+    }
+
+    return val;
+  }
+
+  function createSpecializedPartial(instance, subs, partials, stackSubs, stackPartials, stackText) {
+    function PartialTemplate() {};
+    PartialTemplate.prototype = instance;
+    function Substitutions() {};
+    Substitutions.prototype = instance.subs;
+    var key;
+    var partial = new PartialTemplate();
+    partial.subs = new Substitutions();
+    partial.subsText = {};  //hehe. substext.
+    partial.buf = '';
+
+    stackSubs = stackSubs || {};
+    partial.stackSubs = stackSubs;
+    partial.subsText = stackText;
+    for (key in subs) {
+      if (!stackSubs[key]) stackSubs[key] = subs[key];
+    }
+    for (key in stackSubs) {
+      partial.subs[key] = stackSubs[key];
+    }
+
+    stackPartials = stackPartials || {};
+    partial.stackPartials = stackPartials;
+    for (key in partials) {
+      if (!stackPartials[key]) stackPartials[key] = partials[key];
+    }
+    for (key in stackPartials) {
+      partial.partials[key] = stackPartials[key];
+    }
+
+    return partial;
+  }
+
+  var rAmp = /&/g,
+      rLt = /</g,
+      rGt = />/g,
+      rApos = /\'/g,
+      rQuot = /\"/g,
+      hChars = /[&<>\"\']/;
+
+  function coerceToString(val) {
+    return String((val === null || val === undefined) ? '' : val);
+  }
+
+  function hoganEscape(str) {
+    str = coerceToString(str);
+    return hChars.test(str) ?
+      str
+        .replace(rAmp, '&amp;')
+        .replace(rLt, '&lt;')
+        .replace(rGt, '&gt;')
+        .replace(rApos, '&#39;')
+        .replace(rQuot, '&quot;') :
+      str;
+  }
+
+  var isArray = Array.isArray || function(a) {
+    return Object.prototype.toString.call(a) === '[object Array]';
+  };
+
+})(typeof exports !== 'undefined' ? exports : Hogan);
+
+},{}],9:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
@@ -3068,7 +3900,7 @@ if (typeof module !== 'undefined' && typeof exports === 'object') {
 }());
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*!
  * mustache.js - Logic-less {{mustache}} templates with JavaScript
  * http://github.com/janl/mustache.js
@@ -3671,5 +4503,5 @@ if (typeof module !== 'undefined' && typeof exports === 'object') {
 
 }));
 
-},{}]},{},[4])(4)
+},{}]},{},[2])(2)
 });
