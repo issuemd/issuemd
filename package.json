@@ -30,7 +30,6 @@
   },
   "homepage": "https://github.com/issuemd/issuemd",
   "dependencies": {
-    "hogan.js": "^3.0.2",
     "marked": "^0.3.2",
     "mustache": "^0.8.2"
   },

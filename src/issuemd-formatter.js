@@ -1,7 +1,6 @@
 module.exports = function () {
 
     var mustache = require('../vendor/mustache'),
-        hogan = require('../vendor/hogan'),
         // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
         marked = require('../vendor/marked'),
         utils = require('./utils.js');
@@ -11,17 +10,7 @@ module.exports = function () {
     };
 
     var render_mustache = function(template, data){
-        console.log(data)
-        // console.log('>>>>>>>')
-        // console.log(hogan.compile(template).render(data))
-        // console.log(template,data)
-        // console.log('>>>>>>>')
-        // return hogan.compile(template).render(data);
-        if(utils.typeof(data)){
-          return hogan.compile('{{#arr}}'+template+'{{/arr}}').render({arr:data});
-        } else {
-          return hogan.compile(template).render(data);
-        }
+        return mustache.render(template, data);
     };
 
     var json2html = function (issueJSObject, template_override) {
