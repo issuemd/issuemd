@@ -48,7 +48,7 @@ update = update_delimiter update_meta* update_body {
 
 // attach meta to update
 update_meta = meta:meta {
-  if(meta.key.match(/^modifie[rd]$/)){
+  if(meta.key.match(/^modifie[rd]|type$/)){
     update[meta.key] = meta.val;
   } else {
     update.meta.push(meta);

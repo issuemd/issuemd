@@ -58,7 +58,7 @@ module.exports = (function() {
           update = { meta: [] };
         },
         peg$c10 = function(meta) {
-          if(meta.key.match(/^modifie[rd]$/)){
+          if(meta.key.match(/^modifie[rd]|type$/)){
             update[meta.key] = meta.val;
           } else {
             update.meta.push(meta);
