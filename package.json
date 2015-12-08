@@ -1,6 +1,6 @@
 {
   "name": "issuemd",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "issue tracking in hand",
   "main": "dist/issuemd.js",
   "scripts": {
@@ -8,10 +8,11 @@
     "test:dist": "ENVIRONMENT=dist npm test",
     "build": "npm run build:parser && ./node_modules/browserify/bin/cmd.js --standalone issuemd src/issuemd-core.js --outfile dist/issuemd.js",
     "build:parser": "./node_modules/pegjs/bin/pegjs src/parser.pegjs dist/parser.js",
-    "bump": "node ./scripts/bump.js",
-    "bump:patch": "node ./scripts/bump.js",
-    "bump:major": "node ./scripts/bump.js major",
-    "bump:minor": "node ./scripts/bump.js minor"
+    "bump": "npm run bump:patch",
+    "bump:major": "npm --no-git-tag-version version major",
+    "bump:minor": "npm --no-git-tag-version version minor",
+    "bump:patch": "npm --no-git-tag-version version patch",
+    "update": "updtr"
   },
   "repository": {
     "type": "git",
@@ -31,12 +32,13 @@
   "homepage": "https://github.com/issuemd/issuemd",
   "dependencies": {
     "marked": "^0.3.2",
-    "mustache": "^0.8.2"
+    "mustache": "^2.2.0"
   },
   "devDependencies": {
-    "browserify": "^7.0.0",
+    "browserify": "^12.0.1",
     "chance": "^0.7.6",
     "minijasminenode": "1.1.1",
-    "pegjs": "~0.8.0"
+    "pegjs": "^0.9.0",
+    "updtr": "^0.1.5"
   }
 }
