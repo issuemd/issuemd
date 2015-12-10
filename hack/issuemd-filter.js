@@ -12,7 +12,7 @@
 
     'use strict';
 
-    function filterByFunction(filter, val){
+    function filterByFunction(filter){
         var out = issuemd();
         this.each(function(item){
             if(filter(issuemd(item))){

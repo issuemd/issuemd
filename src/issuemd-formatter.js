@@ -219,6 +219,7 @@ module.exports = function () {
             "{{#comments}}",
             "| {{#util.pad}} {{/util.pad                                                   }} |",
             "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
+            "| {{#util.key}}type{{/util.key     }} | {{#util.val}}{{{type}}}{{/util.val    }} |",
             "| {{#util.key}}modified{{/util.key }} | {{#util.val}}{{{modified}}}{{/util.val}} |",
             "| {{#util.key}}modifier{{/util.key }} | {{#util.val}}{{{modifier}}}{{/util.val}} |",
             "{{#body}}",
@@ -237,11 +238,12 @@ module.exports = function () {
 
                 var issue = issuemd(issueJson), data = {meta:[],comments:[]};
 
-                widest=0;
+                // TODO: better handling of ensuring minimum size of creation field is met
+                widest=8;
                 utils.each(issue.attr(), function(val, key){
                     if(key === 'title' || key === 'body'){
                         data[key] = splitLines(val);
-                    } else if(key === 'created' || key == 'creator'){
+                    } else if(key === 'created' || key === 'creator'){
                         data[key] = val;
                         if(key.length > widest){ widest = key.length; }
                     } else {
