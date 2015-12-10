@@ -88,45 +88,28 @@ module.exports = {
         },
         log: console.log
     },
+    // initially from: http://phpjs.org/functions/wordwrap/
+    // TODO: rewrite this function to be more easily understood/maintained
     wordwrap: function (str, int_width, str_break, cut) {
-      //  discuss at: http://phpjs.org/functions/wordwrap/
-      // original by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-      // improved by: Nick Callen
-      // improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-      // improved by: Sakimori
-      //  revised by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-      // bugfixed by: Michael Grier
-      // bugfixed by: Feras ALHAEK
-      //   example 1: wordwrap('Kevin van Zonneveld', 6, '|', true);
-      //   returns 1: 'Kevin |van |Zonnev|eld'
-      //   example 2: wordwrap('The quick brown fox jumped over the lazy dog.', 20, '<br />\n');
-      //   returns 2: 'The quick brown fox <br />\njumped over the lazy<br />\n dog.'
-      //   example 3: wordwrap('Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.');
-      //   returns 3: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod \ntempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \nveniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea \ncommodo consequat.'
 
-      var m = ((arguments.length >= 2) ? arguments[1] : 75);
-      var b = ((arguments.length >= 3) ? arguments[2] : '\n');
-      var c = ((arguments.length >= 4) ? arguments[3] : false);
-
-      var i, j, l, s, r;
-
-      str += '';
-
-      if (m < 1) {
+    var int_width = ((arguments.length >= 2) ? arguments[1] : 75);
+    var str_break = ((arguments.length >= 3) ? arguments[2] : '\n');
+    var cut = ((arguments.length >= 4) ? arguments[3] : false);
+    
+    var i, j, line_count, line, result;
+    
+    str += '';
+    
+    if (int_width < 1) {
         return str;
-      }
-
-      for (i = -1, l = (r = str.split(/\r\n|\n|\r/))
-        .length; ++i < l; r[i] += s) {
-        for (s = r[i], r[i] = ''; s.length > m; r[i] += s.slice(0, j) + ((s = s.slice(j))
-          .length ? b : '')) {
-          j = c == 2 || (j = s.slice(0, m + 1)
-            .match(/\S*(\s)?$/))[1] ? m : j.input.length - j[0].length || c == 1 && m || j.input.length + (j = s.slice(
-              m)
-            .match(/^\S*/))[0].length;
-        }
-      }
-
-      return r.join('\n');
     }
+    
+    for (i = -1,line_count = (result = str.split(/\r\n|\n|\r/)).length; ++i < line_count; result[i] += line) {
+        for (line = result[i], result[i] = ''; line.length > int_width; result[i] += line.slice(0, j) + ((line = line.slice(j)).length && (line=line.replace(/^\s\b/,'')||true) ? str_break : '')) {
+            j = cut == 2 || (j = line.slice(0, int_width + 1).match(/\S*(\s)?$/))[1] ? int_width : j.input.length - j[0].length || cut == 1 && int_width || j.input.length + (j = line.slice(int_width).match(/^\S*/))[0].length;
+        }
+    }
+    
+    return result.join('\n');
+}
 };
