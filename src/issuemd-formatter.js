@@ -1,8 +1,8 @@
 module.exports = function () {
 
-    var mustache = require('../vendor/mustache'),
+    var mustache = require('mustache'),
         // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
-        marked = require('../vendor/marked'),
+        marked = require('marked'),
         utils = require('./utils.js');
 
     var render_markdown = function(input){
