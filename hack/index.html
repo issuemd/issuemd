@@ -4,8 +4,8 @@
 	<meta charset="UTF-8">
 	<title>issue.md</title>
 	<!-- fetch vendor libraries -->
-	<script src="../vendor/marked/marked.min.js"></script>
-	<script src="../vendor/mustache/mustache.min.js"></script>
+	<script src="../node_modules/marked/marked.min.js"></script>
+	<script src="../node_modules/mustache/mustache.min.js"></script>
 	<script src="../vendor/pegjs/peg-0.8.0.min.js"></script>
 	<script src="../vendor/superagent/index.js"></script>
 	<!-- mock the require function -->
@@ -13,8 +13,8 @@
 	var parser;
 	function require(resource) {
 		switch(resource){
-			case '../vendor/mustache': return Mustache;
-			case '../vendor/marked': return marked;
+			case 'mustache': return Mustache;
+			case 'marked': return marked;
 			case './utils.js': return loader.utils;
 			case './issuemd-formatter.js': return loader.formatter;
 			case './issuemd-merger.js': return loader.merger;
