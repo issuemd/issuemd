@@ -1,7 +1,7 @@
 // module layout inspired by underscore
 ;(function(){
 
-    var parser = require('../dist/parser.js');
+    var parser = require('./issuemd-parser.js');
     var formatter = require('./issuemd-formatter.js');
     var merger = require('./issuemd-merger.js');
     var utils = require("./utils.js");

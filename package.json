@@ -6,8 +6,8 @@
   "scripts": {
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
-    "build": "npm run build:parser && ./node_modules/browserify/bin/cmd.js --standalone issuemd src/issuemd-core.js --outfile dist/issuemd.js",
-    "build:parser": "./node_modules/pegjs/bin/pegjs src/parser.pegjs dist/parser.js",
+    "build": "npm run build:parser && browserify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
+    "build:parser": "pegjs src/issuemd-parser.pegjs",
     "bump": "npm run bump:patch",
     "bump:major": "npm --no-git-tag-version version major",
     "bump:minor": "npm --no-git-tag-version version minor",
@@ -39,6 +39,7 @@
     "chance": "^0.7.6",
     "minijasminenode": "1.1.1",
     "pegjs": "^0.9.0",
+    "uglify-js": "^2.6.1",
     "updtr": "^0.1.5"
   }
 }
