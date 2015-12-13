@@ -426,3 +426,18 @@
     }
 
 }.call(this));
+
+!function(){
+
+    issuemd.fn.sortUpdates = function(){
+        this.each(function(issue){
+
+            issue[0].updates = issue[0].updates.sort(function (a, b) {
+                return a.modified > b.modified;
+            });
+
+        });
+        return this;
+    }
+
+}();
