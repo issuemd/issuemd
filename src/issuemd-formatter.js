@@ -240,8 +240,8 @@ module.exports = function () {
 
                 var issue = issuemd(issueJson), data = {meta:[],comments:[]};
 
-                // TODO: better handling of ensuring minimum size of creation field is met
-                widest=8;
+                // TODO: better handling of ensuring minimum size of composite fields are met
+                widest='signature'.length;
                 utils.each(issue.attr(), function(val, key){
                     if(key === 'title' || key === 'body'){
                         data[key] = splitLines(val);
