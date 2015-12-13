@@ -48,9 +48,9 @@
 
     // return new collection with *reference* to issue at `index` of original collection
     function eq(collection, index){
-        var copy = issuemd(1);
-        copy[0] = collection[index];
-        return copy;
+        var new_collection = issuemd();
+        new_collection[0] = collection[index];
+        return new_collection;
     }
 
     function makeIssues(collection, input){
@@ -81,32 +81,35 @@
 
     }
 
-
     // modifies all issues with modified/modifier (defaults to now if null) and optional attrs object and/or comment string
-    function update(collection /* issue_update_object | modified, modifier[, (meta_array|meta_hash)][, body] */){
+    // TODO: simpify function signature - accept only object, or arguments
+    function update(collection /* issue_update_object | modified, modifier, type, [, (meta_array|meta_hash)][, body] */){
         var args;
-        if (arguments.length === 1) {
-            args = arguments[0];
+        if (arguments.length === 2) {
+            args = arguments[1];
         } else {
             args = {
-                modified: arguments[0],
-                modifier: arguments[1]
+                modified: arguments[1],
+                modifier: arguments[2]
             };
-            if(arguments.length === 3 && typeof arguments[2] === 'string') {
-                args.body = arguments[2];
+            if(arguments.length === 5 && typeof arguments[4] === 'string') {
+                args.body = arguments[4];
             } else {
                 // if the `meta` argument is not an object assume it's an array akin to issue updates meta array
-                if (utils.typeof(arguments[2]) !== "object") {
-                    args.meta = arguments[2];
+                if (utils.typeof(arguments[4]) !== "object") {
+                    args.meta = arguments[4];
                 } else {
                     // else assume it is a key/value pair hash, and map it to array akin to issue updates meta array
-                    args.meta = utils.mapToArray(arguments[2], function (val, key) {
+                    args.meta = utils.mapToArray(arguments[4], function (val, key) {
                         return {key: key, val: val};
                     });
                 }
                 // and set the body
-                args.body = arguments[3];
+                args.body = arguments[5];
             }
+        }
+        if(!!args.body &! args.type){
+            args.type = 'comment';
         }
         // TODO: should default falsy modified value to `now`
         utils.each(collection, function(issue){
@@ -168,6 +171,7 @@
                 return arr;
             } else {
                 // return value for specified key from first issue
+                // TODO: should this be more like attr(collection) ..?
                 return collection.attr()[key];
             }
         } else if ((typeof key === 'undefined' && typeof val === 'undefined') || typeof key === "boolean") {
@@ -194,6 +198,20 @@
             }
             return key ? arr : arr[0];
         }
+    }
+
+    function signature(collection) {
+        return compose_signature(collection.attr('creator'), collection.attr('created'));
+    }
+
+    function hash(collection /*, all*/) {
+        var all = arguments[arguments.length-1];
+        var arr = [];
+        var how_many = typeof all === 'boolean' && all ? collection.length : 1;
+        for(var i = 0; i < how_many; i++){
+            arr.push(utils.hash(signature(collection.eq(i))));
+        }
+        return typeof all === 'boolean' && all ? arr : arr[0];
     }
 
     // TODO: see how much of this code can be merged with attr and proxied through there
@@ -270,16 +288,17 @@
 
         var arr = issue_array_from_anything(input);
 
-        var hashes = collection.attr("hash", true);
+        // TODO: validate against hash attribute
+        var hashes = collection.hash(true);
 
         utils.each(arr, function(issue){
+            var idx;
             var merged = false;
-            for(var i = 0; i < issue.original.meta.length; i++){
-                var idx = utils.indexOf(hashes, issue.original.meta[i].val);
-                if(issue.original.meta[i].key === "hash" && idx != -1){
-                    merger(collection[idx], issue);
-                    merged = true;
-                }
+            // TODO: is it really ok for the hash to be derived from the signature alone!!?
+            var issue_hash = utils.hash(compose_signature(issue.original.creator, issue.original.created))
+            if((idx = utils.indexOf(hashes, issue_hash)) != -1){
+                merger(collection[idx], issue);
+                merged = true;
             }
             if (!merged){
                 collection.push(issue);
@@ -310,7 +329,12 @@
             return parser.parse(input);
         }
     }
-  
+
+    // helper function ensures consistant signature creation
+    function compose_signature(creator, created) {
+        return utils.trim(creator) + ' @ ' + utils.trim(created);
+    }
+
     var root = this;
 
     // main entry point for issuemd api
@@ -332,6 +356,12 @@
     // issuemd constructor function
     var Issuemd = function(input) {
 
+        // if there is no input, return a collection with no issues
+        if(input == undefined){
+            makeIssues(this, 0);
+            return this;
+        }
+
         // if there is more than one argument, treat it as an array and re-wrap
         if(arguments.length > 1){
             return issuemd(arguments);
@@ -340,18 +370,6 @@
         // if collection passed in, just return it without further ado
         if (input instanceof issuemd.fn.constructor) {
             return input;
-        }
-
-        // if there is no input, return a collection with no issues
-        if(input == undefined){
-            return this;
-        }
-
-        // if a number is passed, return collection of that many blank issues
-        // useful for building issues using chained api
-        if(typeof input === "number"){
-            makeIssues(this, input);
-            return this;
         }
 
         // assume input is issue like, and try to return it as a collection
@@ -403,6 +421,8 @@
         update: passThis(update),
         merge: passThis(localmerge),
         attr: passThis(attr),
+        signature: passThis(signature),
+        hash: passThis(hash),
         meta: passThis(meta),
         comments: passThis(comments),
         filter: passThis(filter)

@@ -35,6 +35,7 @@
     "mustache": "^2.2.0"
   },
   "devDependencies": {
+    "blueimp-md5": "^1.1.1",
     "browserify": "^12.0.1",
     "chance": "^0.7.6",
     "minijasminenode": "1.1.1",

@@ -7,8 +7,8 @@ describe('issuemd create', function() {
 
   it('should create empty issues', function() {
     var timestring = '2015-06-27 19:42:56';
-    expect(issuemd(1).attr({created:timestring})+'').toBe(fixtures.empty_issue);
-    expect(issuemd(3).attr({created:timestring})+'').toBe(fixtures.empty_issue+'\n'+fixtures.empty_issue+'\n'+fixtures.empty_issue);
+    expect(issuemd().attr({created:timestring})+'').toBe('');
+    expect(issuemd({}).attr({created:timestring})+'').toBe(fixtures.empty_issue);
   });
 
 });

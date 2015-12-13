@@ -81,6 +81,13 @@ module.exports = {
         });
         return results;
     },
+    // return firstbits hash of input, optionally specify `size` which defaults to 6
+    hash: function(string, size){
+        return require('blueimp-md5').md5(string).slice(0, size || 6);
+    },
+    trim: function(string){
+        return string.replace(/(^\s+|\s+$)/g,'');
+    },
     debug: {
         warn: function(message){
             if(console.warn) console.warn(message);
