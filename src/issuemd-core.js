@@ -81,39 +81,19 @@
 
     }
 
-    // modifies all issues with modified/modifier (defaults to now if null) and optional attrs object and/or comment string
-    // TODO: simpify function signature - accept only object, or arguments
-    function update(collection /* issue_update_object | modified, modifier, type, [, (meta_array|meta_hash)][, body] */){
-        var args;
-        if (arguments.length === 2) {
-            args = arguments[1];
-        } else {
-            args = {
-                modified: arguments[1],
-                modifier: arguments[2]
-            };
-            if(arguments.length === 5 && typeof arguments[4] === 'string') {
-                args.body = arguments[4];
-            } else {
-                // if the `meta` argument is not an object assume it's an array akin to issue updates meta array
-                if (utils.typeof(arguments[4]) !== "object") {
-                    args.meta = arguments[4];
-                } else {
-                    // else assume it is a key/value pair hash, and map it to array akin to issue updates meta array
-                    args.meta = utils.mapToArray(arguments[4], function (val, key) {
-                        return {key: key, val: val};
-                    });
-                }
-                // and set the body
-                args.body = arguments[5];
-            }
-        }
-        if(!!args.body &! args.type){
-            args.type = 'comment';
-        }
-        // TODO: should default falsy modified value to `now`
+    // accepts `input` object including modifier, modified
+    function update(collection, input){
+        var update = {};
+        utils.each(['modified','modifier','type','body'], function(val, i){
+            update[val] = input[val];
+            delete input[val];
+        });
+        update.modified = update.modified != null ? update.modified : utils.now();
+        update.meta = utils.mapToArray(input, function (val, key) {
+            return {key: key, val: val};
+        });
         utils.each(collection, function(issue){
-            issue.updates.push(args);
+            issue.updates.push(update);
         });
         return collection;
     }
@@ -372,6 +352,7 @@
             return input;
         }
 
+        // TODO: should this throw? Why are we catching invalid input?
         // assume input is issue like, and try to return it as a collection
         try {
             var arr = issue_array_from_anything(input);
