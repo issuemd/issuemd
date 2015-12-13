@@ -171,16 +171,30 @@ module.exports = function () {
         });
 
         var template = template_override ? template_override : [
-            '+-{{#util.pad}}-{{/util.pad}}-+',
-            '| {{#util.curtailed}}ID     Assignee     Status       Title{{/util.curtailed}} |',
-            '+-{{#util.pad}}-{{/util.pad}}-+',
-            '{{#data}}',
-            '| {{#util.curtailed}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}} {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.curtailed}} |',
-            '{{/data}}',
-            '+-{{#util.pad}}-{{/util.pad}}-+',
+            '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
+            '| {{#util.curtailed}}ID     Assignee     Status       Title{{/util.curtailed                           }} |',
+            '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
+                '{{#data}}',
+            '| {{#util.curtailed}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}}' +
+                ' {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.curtailed                           }} |',
+                '{{/data}}',
+            '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
         ].join('\n');
 
-        return render_mustache(template, {util:{body:body,key:key,val:val,pad:pad,pad6:pad6,pad12:pad12,padleft:padleft,padright:padright,curtailed:curtailed},data:data});
+        return render_mustache(template, {
+            util: {
+                body: body,
+                key: key,
+                val: val,
+                pad: pad,
+                pad6: pad6,
+                pad12: pad12,
+                padleft: padleft,
+                padright: padright,
+                curtailed: curtailed
+            },
+            data: data
+        });
 
     };
 
@@ -202,36 +216,34 @@ module.exports = function () {
         }
 
         var template = template_override ? template_override : [
-            "{{#data}}",
-
+                "{{#data}}",
             "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
-            "{{#title}}",
+                    "{{#title}}",
             "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
-            "{{/title}}",
+                    "{{/title}}",
             "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
             "| {{#util.key}}created{{/util.key  }} | {{#util.val}}{{{created}}}{{/util.val }} |",
             "| {{#util.key}}creator{{/util.key  }} | {{#util.val}}{{{creator}}}{{/util.val }} |",
-            "{{#meta}}",
+                    "{{#meta}}",
             "| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.val}}{{{val}}}{{/util.val     }} |",
-            "{{/meta}}",
+                    "{{/meta}}",
             "| {{#util.pad}} {{/util.pad                                                   }} |",
-            "{{#body}}",
+                    "{{#body}}",
             "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
-            "{{/body}}",
-            "{{#comments}}",
+                    "{{/body}}",
+                    "{{#comments}}",
             "| {{#util.pad}} {{/util.pad                                                   }} |",
             "+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+",
             "| {{#util.key}}type{{/util.key     }} | {{#util.val}}{{{type}}}{{/util.val    }} |",
             "| {{#util.key}}modified{{/util.key }} | {{#util.val}}{{{modified}}}{{/util.val}} |",
             "| {{#util.key}}modifier{{/util.key }} | {{#util.val}}{{{modifier}}}{{/util.val}} |",
             "| {{#util.pad}} {{/util.pad                                                   }} |",
-            "{{#body}}",
+                        "{{#body}}",
             "| {{#util.body}}{{{.}}}{{/util.body                                           }} |",
-            "{{/body}}",
-            "{{/comments}}",
+                        "{{/body}}",
+                    "{{/comments}}",
             "+-{{#util.pad}}-{{/util.pad                                                   }}-+",
-
-            "{{/data}}"
+                "{{/data}}"
         ].join("\n");
 
         if (issueJSObject) {
@@ -259,7 +271,18 @@ module.exports = function () {
                     data.comments.push(val);
                 });
 
-                out.push(render_mustache(template, {util:{body:body,key:key,val:val,pad:pad,padleft:padleft,padright:padright},data:data}));
+                out.push(render_mustache(template, {
+                    util: {
+                        body: body,
+                        key: key,
+                        val: val,
+                        pad: pad,
+                        padleft: padleft,
+                        padright: padright
+                    },
+                    data: data
+                }));
+
             });
 
             return out.join('\n');
