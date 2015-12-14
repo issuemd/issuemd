@@ -2,3 +2,4 @@ node_modules
 misc
 build
 .DS_Store
+.issuerc

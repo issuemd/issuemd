@@ -1,3 +1,8 @@
+// TODO: use key/value not key/val
+// TODO: lint with semistandard js
+// TODO: classes for collection, issue, update
+// TODO: created/modified -> timestamp - creator/modifier -> author (or think of better names)
+
 // module layout inspired by underscore
 ;(function(){
 
