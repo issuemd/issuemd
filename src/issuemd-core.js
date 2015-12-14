@@ -108,7 +108,8 @@
 
         utils.each(collection, function(issue){
             issue.updates = issue.updates || [];
-            issue.updates = issue.updates.concat(updates);
+            // must retain original reference to array, not copy, hence...
+            [].push.apply(issue.updates, updates);
         });
 
         return collection;
