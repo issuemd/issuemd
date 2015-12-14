@@ -18,7 +18,7 @@ module.exports = {
     },
     makeIssue: function (original, updates) {
         original = original || {};
-        return {
+        var out = {
             original: {
                 title: original.title || "",
                 creator: original.creator || "",
@@ -28,6 +28,18 @@ module.exports = {
             },
             updates: updates || []
         };
+        // TODO: does it make sense to set modified time for all updates if not set?
+        var that = this;
+        this.each(out.updates, function(update){
+            update.modified = update.modified || that.now();
+        });
+        return out;
+    },
+    // takes hash and returns array of key/val objects
+    toKeyVal: function(input){
+        return this.mapToArray(input, function (val, key) {
+            return {key: key, val: val};
+        });
     },
     // TODO: better method to deep copy
     copy: function (input) {
