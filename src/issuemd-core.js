@@ -53,7 +53,7 @@
 
     // return new collection with *reference* to issue at `index` of original collection
     function eq(collection, index){
-        var new_collection = issuemd();
+        var new_collection = issuemd({});
         new_collection[0] = collection[index];
         return new_collection;
     }
@@ -67,7 +67,7 @@
 
     // loops over each issue - like underscore's each
     function each(collection, func){
-        utils.each(collection, function(item){ func(issuemd(item)); });
+        utils.each(collection, function(item){ func(issuemd([item])); });
         return collection;
     }
 
@@ -87,19 +87,30 @@
     }
 
     // accepts `input` object including modifier, modified
-    function update(collection, input){
-        var update = {};
-        utils.each(['modified','modifier','type','body'], function(val, i){
-            update[val] = input[val];
-            delete input[val];
+    function update(collection, input/*...*/){
+
+        if(utils.typeof(input) !== "array"){
+            input = [].slice.call(arguments, 1);
+        }
+        var updates = [];
+        utils.each(input, function(update){
+            var build = {meta:[]};
+            utils.each(update, function(val, key){
+                if(key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
+                    build[key] = val;
+                } else {
+                    build.meta.push({ key:key, val:val });
+                }
+            });
+            build.modified = build.modified || utils.now();
+            updates.push(build);
         });
-        update.modified = update.modified != null ? update.modified : utils.now();
-        update.meta = utils.mapToArray(input, function (val, key) {
-            return {key: key, val: val};
-        });
+
         utils.each(collection, function(issue){
-            issue.updates.push(update);
+            issue.updates = issue.updates || [];
+            issue.updates = issue.updates.concat(updates);
         });
+
         return collection;
     }
 
@@ -322,11 +333,27 @@
 
     var root = this;
 
+    function applyToConstructor(constructor, argArray) {
+        var args = [null].concat(argArray);
+        var factoryFunction = constructor.bind.apply(constructor, args);
+        return new factoryFunction();
+    }
+
     // main entry point for issuemd api
     // jquery like chained api inspired by: http://blog.buymeasoda.com/creating-a-jquery-like-chaining-api/
     // TODO: handle creation of `$i` shortcut better, perhaps adding `$i.noConflict()` function
-    $i = issuemd = function(input) {
-        return new Issuemd(input);
+    $i = issuemd = function() {
+
+        // http://stackoverflow.com/a/14378462/665261
+        function factoryBuilder(constructor) {
+            var instance = Object.create(constructor.prototype);
+            var result = constructor.apply(instance, Array.prototype.slice.call(arguments, 1));
+            return (result !== null && typeof result === 'object') ? result : instance;
+        }
+
+        var issuemdFactory = factoryBuilder.bind(null, Issuemd);
+        return issuemdFactory.apply(null, arguments);
+
     };
 
     // TODO: read in config to set this and other things like it
@@ -339,7 +366,7 @@
     issuemd.formatter = formatter;
 
     // issuemd constructor function
-    var Issuemd = function(input) {
+    var Issuemd = function(input, arg2) {
 
         // if there is no input, return a collection with no issues
         if(input == undefined){
@@ -347,32 +374,49 @@
             return this;
         }
 
-        // if there is more than one argument, treat it as an array and re-wrap
-        if(arguments.length > 1){
-            return issuemd(arguments);
-        }
-
         // if collection passed in, just return it without further ado
         if (input instanceof issuemd.fn.constructor) {
             return input;
         }
 
-        // TODO: should this throw? Why are we catching invalid input?
-        // assume input is issue like, and try to return it as a collection
-        try {
-            var arr = issue_array_from_anything(input);
-            for(var i=0; i<arr.length; i++){
-                localmerge(this, arr[i]);
+        if(utils.typeof(input) === "object"){
+            var build = { original: { meta:[] }, updates: [] };
+            utils.each(input, function(val, key){
+                if(key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
+                    build.original[key] = val;
+                } else {
+                    build.original.meta.push({ key:key, val:val });
+                }
+            });
+            if(utils.typeof(arg2) === "array" || (utils.typeof(arg2) === "object" && (arg2 = [].slice.call(arguments, 1)))) {
+                var updates = [];
+                utils.each(arg2, function(update){
+                    var build = {meta:[]};
+                    utils.each(update, function(val, key){
+                        if(key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
+                            build[key] = val;
+                        } else {
+                            build.meta.push({ key:key, val:val });
+                        }
+                    });
+                    updates.push(build);
+                });
+                build.updates = updates;
             }
-        } catch(e) {
-            console.log(e.message);
+            input = build;
+        }
+
+        // assume input is issue like, and try to return it as a collection
+        var arr = issue_array_from_anything(input);
+        for(var i=0; i<arr.length; i++){
+            localmerge(this, arr[i]);
         }
 
         return this;
 
     };
 
-    passThis = function(fn){
+    function passThis(fn){
         return function(){
             [].unshift.call(arguments, this);
             return fn.apply(this, arguments);            
