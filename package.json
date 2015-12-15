@@ -1,8 +1,8 @@
 {
   "name": "issuemd",
-  "version": "2.0.0",
+  "version": "0.0.0-alpha1",
   "description": "issue tracking in hand",
-  "main": "dist/issuemd.js",
+  "main": "issuemd.min.js",
   "scripts": {
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
@@ -25,6 +25,12 @@
     "issuemd"
   ],
   "author": "Billy Moon (billy@issue.md)",
+  "contributors": [
+    {
+      "name": "Luka Siric",
+      "email": "luka@issue.md"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/issuemd/issuemd/issues"
