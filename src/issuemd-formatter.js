@@ -15,14 +15,24 @@ module.exports = function () {
 
     var json2html = function (issueJSObject, template_override) {
 
+        var i;
+
         issueJSObject = utils.arrayWrap(issueJSObject);
 
         var issue = utils.copy(issueJSObject);
 
         for(var j = issue.length; j--;){
-            issue[j].original.body = marked(issue[j].original.body);
+            if(issue[j].original.body) {
+                issue[j].original.body = marked(issue[j].original.body);
+            } else {
+                issue[j].original.body = '';
+            }
             for(i = issue[j].updates.length;i--;){
-                issue[j].updates[i].body = marked(issue[j].updates[i].body);
+                if(issue[j].updates[i].body){
+                    issue[j].updates[i].body = marked(issue[j].updates[i].body);
+                } else {
+                    issue[j].updates[i].body = '';
+                }
             }
         }
 
