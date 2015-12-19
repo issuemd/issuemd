@@ -9,7 +9,7 @@
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
     "build": "npm run build:parser && browserify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
-    "build:parser": "pegjs src/issuemd-parser.pegjs",
+    "build:parser": "pegjs < src/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
     "bump": "npm run bump:patch",
     "bump:major": "npm --no-git-tag-version version major",
     "bump:minor": "npm --no-git-tag-version version minor",

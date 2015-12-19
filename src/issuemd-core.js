@@ -3,6 +3,7 @@
 // TODO: classes for collection, issue, update
 // TODO: created/modified -> timestamp - creator/modifier -> author (or think of better names)
 // TODO: move issuemd-parser.js out of src folder - it's not source, and breaks lint rules on src
+// TODO: improve npm run build:parser command - make sure works on all platforms
 
 // TODO: add use strict, figure out how to remove issuemd global
 //'use strict';
@@ -10,7 +11,7 @@
 // module layout inspired by underscore
 ! function () {
 
-    var parser = require('./issuemd-parser.js');
+    var parser = require('../issuemd-parser.min.js');
     var formatter = require('./issuemd-formatter.js');
     var merger = require('./issuemd-merger.js');
     var utils = require('./utils.js');
