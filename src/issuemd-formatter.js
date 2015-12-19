@@ -1,8 +1,6 @@
-/* globals issuemd */
-
 'use strict';
 
-module.exports = function () {
+module.exports = function (issuemd) {
 
     var mustache = require('mustache'),
         // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
@@ -345,4 +343,4 @@ module.exports = function () {
         summary: json2summaryTable
     };
 
-}();
+};

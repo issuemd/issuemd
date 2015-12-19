@@ -5,7 +5,7 @@
   "main": "issuemd.min.js",
   "scripts": {
     "format": "js-beautify -r src/*.js test/*.js",
-    "lint": "jshint src/*.js test/*.js",
+    "lint": "jshint src test",
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
     "build": "npm run build:parser && browserify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",

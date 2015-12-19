@@ -1,7 +1,7 @@
 'use strict';
 
 // TODO: think about how to handle global `issuemd`
-var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd-core.js');
+var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../issuemd.min.js') : require('../src/issuemd-core.js');
 
 var fixtures = require('./fixtures.js');
 

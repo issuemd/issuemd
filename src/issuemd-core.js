@@ -6,13 +6,13 @@
 // TODO: improve npm run build:parser command - make sure works on all platforms
 
 // TODO: add use strict, figure out how to remove issuemd global
-//'use strict';
+'use strict';
 
 // module layout inspired by underscore
 ! function () {
 
+    var issuemd; // defined later in this file
     var parser = require('../issuemd-parser.min.js');
-    var formatter = require('./issuemd-formatter.js');
     var merger = require('./issuemd-merger.js');
     var utils = require('./utils.js');
 
@@ -380,7 +380,10 @@
     issuemd.parser = parser;
     issuemd.merge = merger;
     issuemd.utils = utils;
-    issuemd.formatter = formatter;
+    // TODO: re-order function definitions - perhaps as expressions, and ordered by order of appearance
+    // TODO: think about consistency of module import signature (passing issuemd to formatter only)
+    var formatter = require('./issuemd-formatter.js')(issuemd);
+    issuemd.formatter = require('./issuemd-formatter.js')(issuemd);
 
     // issuemd constructor function
     var Issuemd = function (input, arg2) {
@@ -508,11 +511,9 @@
         });
     }
 
-}();
-
-! function () {
-
-    'use strict';
+    /* * * * * *
+     * mixins  *
+     * * * * * */
 
     issuemd.fn.sortUpdates = function () {
         this.each(function (issue) {
