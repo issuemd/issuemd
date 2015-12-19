@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = function () {
 
     var utils = require('./utils.js');
@@ -27,9 +29,9 @@ module.exports = function () {
         // check inequality in issue head
         left.updates = null;
         right.updates = null;
-        if (!utils.objectsEqual(left,right)) {
+        if (!utils.objectsEqual(left, right)) {
             // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
-            console.log("issues are not identical - head must not be modified, only updates added");
+            console.log('issues are not identical - head must not be modified, only updates added');
         }
 
         // TODO: better way to ensure updates on right side remain untouched
