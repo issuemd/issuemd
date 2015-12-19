@@ -3,3 +3,4 @@ misc
 build
 .DS_Store
 .issuerc
+npm-debug.log

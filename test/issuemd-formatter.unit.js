@@ -7,8 +7,8 @@
 //
 //   it('should format issues as ', function() {
 //     var timestring = '2015-06-27 19:42:56';
-//     expect(issuemd(1).attr({created:timestring})+'').toBe(fixtures.empty_issue);
-//     expect(issuemd(3).attr({created:timestring})+'').toBe(fixtures.empty_issue+'\n'+fixtures.empty_issue+'\n'+fixtures.empty_issue);
+//     expect(issuemd(1).attr({created:timestring})+'').toBe(fixtures.emptyIssue);
+//     expect(issuemd(3).attr({created:timestring})+'').toBe(fixtures.emptyIssue+'\n'+fixtures.emptyIssue+'\n'+fixtures.emptyIssue);
 //   });
 //
 // });
