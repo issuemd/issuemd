@@ -1,48 +1,50 @@
+'use strict';
+
 var fixtures = require('./fixtures.js');
 
-describe("issuemd parser", function() {
+describe('issuemd parser', function () {
 
-  var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd-core.js');
+    var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd-core.js');
 
-  it('should parse simple markdown issue', function(){
+    it('should parse simple markdown issue', function () {
 
-    var issue = issuemd(fixtures.simple_issue);
+        var issue = issuemd(fixtures.simpleIssue);
 
-    expect(issue.length).toBe(1);
-    expect(JSON.stringify(issue[0])).toBe(fixtures.simple_issue_json);
+        expect(issue.length).toBe(1);
+        expect(JSON.stringify(issue[0])).toBe(fixtures.simpleIssueJson);
 
-  });
+    });
 
-  it('should parse markdown issue with meta', function(){
+    it('should parse markdown issue with meta', function () {
 
-    var issue = issuemd(fixtures.simple_issue_with_meta);
+        var issue = issuemd(fixtures.simpleIssueWithMeta);
 
-    expect(issue.length).toBe(1);
-    expect(JSON.stringify(issue[0])).toBe(fixtures.simple_issue_with_meta_json);
+        expect(issue.length).toBe(1);
+        expect(JSON.stringify(issue[0])).toBe(fixtures.simpleIssueWithMetaJson);
 
-  });
+    });
 
-  it('should reproduce markdown after parsing', function(){
+    it('should reproduce markdown after parsing', function () {
 
-    var issue = issuemd(fixtures.simple_issue_with_meta);
-    expect(issue.md()).toBe(fixtures.simple_issue_with_meta);
+        var issue = issuemd(fixtures.simpleIssueWithMeta);
+        expect(issue.md()).toBe(fixtures.simpleIssueWithMeta);
 
-  });
+    });
 
-  it('should reproduce markdown after parsing malformed input', function(){
+    it('should reproduce markdown after parsing malformed input', function () {
 
-    var issue = issuemd(fixtures.simple_issue_with_meta_malformed);
-    expect(issue.md()).toBe(fixtures.simple_issue_with_meta);
+        var issue = issuemd(fixtures.simpleIssueWithMetaMalformed);
+        expect(issue.md()).toBe(fixtures.simpleIssueWithMeta);
 
-  });
+    });
 
-  it('should parse markdown issue with comments', function(){
+    it('should parse markdown issue with comments', function () {
 
-    var issue = issuemd(fixtures.issue_with_comments);
+        var issue = issuemd(fixtures.issueWithComments);
 
-    expect(issue.length).toBe(1);
-    expect(JSON.stringify(issue[0])).toBe(fixtures.issue_with_comments_json);
+        expect(issue.length).toBe(1);
+        expect(JSON.stringify(issue[0])).toBe(fixtures.issueWithCommentsJson);
 
-  });
+    });
 
 });

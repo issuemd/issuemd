@@ -1,9 +1,11 @@
-describe("issuemd load", function() {
+'use strict';
 
-  var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd-core.js');
+describe('issuemd load', function () {
 
-  it("should load the library", function() {
-    expect(typeof issuemd).toBe('function');
-  });
+    var issuemd = process.env.ENVIRONMENT === 'dist' ? require('../dist/issuemd.js') : require('../src/issuemd-core.js');
+
+    it('should load the library', function () {
+        expect(typeof issuemd).toBe('function');
+    });
 
 });
