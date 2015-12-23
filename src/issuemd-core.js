@@ -1,16 +1,10 @@
-// TODO: lint with semistandard js
-// TODO: classes for collection, issue, update
-// TODO: created/modified -> timestamp - creator/modifier -> author (or think of better names)
-// TODO: move issuemd-parser.js out of src folder - it's not source, and breaks lint rules on src
-// TODO: improve npm run build:parser command - make sure works on all platforms
-
-// TODO: add use strict, figure out how to remove issuemd global
 'use strict';
 
 // module layout inspired by underscore
 ! function () {
 
     var issuemd; // defined later in this file
+    // formatter required later, to allow passing of issuemd
     var parser = require('../issuemd-parser.min.js');
     var merger = require('./issuemd-merger.js');
     var utils = require('./utils.js');
@@ -35,7 +29,6 @@
     }
 
     // return MD render of all ussues
-    // TODO: accept md and merge into collection - perhaps call from main entry point
     function md(collection, input, templateOverride) {
         if (typeof input === 'string') {
             return collection.merge(input);
@@ -185,8 +178,7 @@
                 return arr;
             } else {
                 // return value for specified key from first issue
-                // TODO: should this be more like attr(collection) ..?
-                return collection.attr()[key];
+                return attr(collection)[key];
             }
         } else if ((typeof key === 'undefined' && typeof value === 'undefined') || typeof key === 'boolean') {
             // returns hash of attrs of first issue or array of hashes for all issues if boolean is true
@@ -204,7 +196,6 @@
                     title: collection[i].original.title,
                     created: collection[i].original.created,
                     creator: collection[i].original.creator,
-                    // TODO: should we return body here?
                     body: collection[i].original.body
                 };
                 utils.each(collection[i].original.meta, metaHandler);
@@ -230,13 +221,11 @@
         return typeof all === 'boolean' && all ? arr : arr[0];
     }
 
-    // TODO: see how much of this code can be merged with attr and proxied through there
     // same as `.attr` but only for meta (i.e. without title/created/creator/body)
     function meta(collection, key, value) {
         if (utils.isObject(key) || (typeof key === 'string' && typeof value === 'string')) {
             return attr(collection, key, value);
         } else if (typeof key === 'string') {
-            // TODO: move get meta from `.attr` method to here, let `.attr` call this, and augment it
             return attr(collection, key, value);
         } else if (arguments.length === 0 || typeof key === 'boolean') {
             var arr = [];
@@ -284,8 +273,7 @@
             var attrValue = issue.attr(key),
                 match = false;
             issuemd.utils.each(values, function (value) {
-                // TODO: evaluate value equality test - should we continue to use `toString`?
-                if (!match && (issuemd.utils.typeof(value) === 'regexp' && value.test(attrValue)) || attrValue === value.toString()) {
+                if (!match && (issuemd.utils.typeof(value) === 'regexp' && value.test(attrValue)) || attrValue === value) {
                     match = true;
                     return match;
                 }
@@ -300,19 +288,16 @@
 
     /* helper functions for Issuemd class */
 
-    // TODO: create validate function to remove duplicates, warn, error out, clean etc... and call from here after merge
     // merges one or more issues from issuePOJO or issueMD into issues
     function localmerge(collection, input) {
 
         var arr = issueArrayFromAnything(input);
 
-        // TODO: validate against hash attribute
         var hashes = collection.hash(true);
 
         utils.each(arr, function (issue) {
             var idx;
             var merged = false;
-            // TODO: is it really ok for the hash to be derived from the signature alone!!?
             var issueHash = utils.hash(composeSignature(issue.original.creator, issue.original.created));
             if ((idx = utils.indexOf(hashes, issueHash)) !== -1) {
                 merger(collection[idx], issue);
@@ -357,7 +342,6 @@
 
     // main entry point for issuemd api
     // jquery like chained api inspired by: http://blog.buymeasoda.com/creating-a-jquery-like-chaining-api/
-    // TODO: think about adding `issuemd.noConflict()` method
     issuemd = function () {
 
         // http://stackoverflow.com/a/14378462/665261
@@ -372,17 +356,14 @@
 
     };
 
-    // TODO: read in config to set this and other things like it
     issuemd.version = '0.1.0';
 
     // get the core components in place
+    var formatter = require('./issuemd-formatter.js')(issuemd);
+    issuemd.formatter = formatter;
     issuemd.parser = parser;
     issuemd.merge = merger;
     issuemd.utils = utils;
-    // TODO: re-order function definitions - perhaps as expressions, and ordered by order of appearance
-    // TODO: think about consistency of module import signature (passing issuemd to formatter only)
-    var formatter = require('./issuemd-formatter.js')(issuemd);
-    issuemd.formatter = require('./issuemd-formatter.js')(issuemd);
 
     // issuemd constructor function
     var Issuemd = function (input, arg2) {
@@ -492,12 +473,10 @@
         filter: passThis(filter)
     };
 
-    // hook module into AMD/require etc... or create as global variable
+    // hook module into AMD/require etc...
 
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
-            // TODO: should exports be set here - inspired by underscore.js pattern - jshint says it's readonly!
-            /*exports = */
             module.exports = issuemd;
         }
         exports.issuemd = issuemd;
