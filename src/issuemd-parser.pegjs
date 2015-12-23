@@ -25,7 +25,7 @@ title = "##" whitespace+ title:all_chars {
 // attach meta to issue object
 issue_meta = meta:meta {
   if(meta.key.match(/^creat(or|ed)$/)){
-    issue.original[meta.key] = meta.val;
+    issue.original[meta.key] = meta.value;
   } else {
     issue.original.meta.push(meta);
   }
@@ -49,7 +49,7 @@ update = update_delimiter update_meta* update_body {
 // attach meta to update
 update_meta = meta:meta {
   if(meta.key.match(/^modifie[rd]|type$/)){
-    update[meta.key] = meta.val;
+    update[meta.key] = meta.value;
   } else {
     update.meta.push(meta);
   }
@@ -77,7 +77,7 @@ body = nl nl body:anything+ { return body }
 //6. 0 or more single spaces
 //7. at least one character after single space
 //8. 0 or more characters until the end of the line
-meta = nl "+" whitespace+ key:safe_chars ":" whitespace* val:all_chars { return {key:key, val:val} }
+meta = nl "+" whitespace+ key:safe_chars ":" whitespace* value:all_chars { return {key:key, value:value} }
 
 // section delimiters (updates/issues)
 // 1. exact 3 '-' characters

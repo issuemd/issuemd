@@ -1,4 +1,3 @@
-// TODO: use key/value not key/val
 // TODO: lint with semistandard js
 // TODO: classes for collection, issue, update
 // TODO: created/modified -> timestamp - creator/modifier -> author (or think of better names)
@@ -104,13 +103,13 @@
             var build = {
                 meta: []
             };
-            utils.each(update, function (val, key) {
+            utils.each(update, function (value, key) {
                 if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
-                    build[key] = val;
+                    build[key] = value;
                 } else {
                     build.meta.push({
                         key: key,
-                        val: val
+                        value: value
                     });
                 }
             });
@@ -127,7 +126,7 @@
         return collection;
     }
 
-    // creates or overwrites existing meta item with new key/val
+    // creates or overwrites existing meta item with new key/value
     function updateMeta(collection, obj) {
 
         utils.each(collection, function (issue) {
@@ -135,22 +134,22 @@
 
             function hitness(meta) {
                 if (meta.key === key) {
-                    meta.val = val;
+                    meta.value = value;
                     hit = true;
                 }
             }
             for (var key in obj) {
-                var val = obj[key];
+                var value = obj[key];
                 hit = false;
                 if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
-                    issue.original[key] = val;
+                    issue.original[key] = value;
                 } else {
                     // check all original meta values
                     utils.each(issue.original.meta, hitness);
                     if (!hit) {
                         issue.original.meta.push({
                             key: key,
-                            val: val
+                            value: value
                         });
                     }
                 }
@@ -160,16 +159,16 @@
 
     // without args or with boolean, returns raw attr hash from first issue or array of hashes from all issues (includes title/created/creator)
     // with key specified, returns matching value from first issue
-    // with key/val, or key/val hash specified, updates all issues with key/val attrs
-    function attr(collection, key, val) {
+    // with key/value, or key/value hash specified, updates all issues with key/value attrs
+    function attr(collection, key, value) {
 
         var howMany;
         var arr = [];
 
-        // if we have a key and val, update issue meta
-        if (typeof key === 'string' && typeof val === 'string') {
+        // if we have a key and value, update issue meta
+        if (typeof key === 'string' && typeof value === 'string') {
             var obj = {};
-            obj[key] = val;
+            obj[key] = value;
             updateMeta(collection, obj);
             return collection;
             // if object passed in, update issue meta with object
@@ -178,9 +177,9 @@
             return collection;
             // if a key string is passed in, get related value from first issue
         } else if (typeof key === 'string') {
-            if (val) {
+            if (value) {
                 // return array of values for specified key from all issues
-                utils.each(collection.attr(val), function (issue) {
+                utils.each(collection.attr(value), function (issue) {
                     arr.push(issue[key]);
                 });
                 return arr;
@@ -189,15 +188,15 @@
                 // TODO: should this be more like attr(collection) ..?
                 return collection.attr()[key];
             }
-        } else if ((typeof key === 'undefined' && typeof val === 'undefined') || typeof key === 'boolean') {
+        } else if ((typeof key === 'undefined' && typeof value === 'undefined') || typeof key === 'boolean') {
             // returns hash of attrs of first issue or array of hashes for all issues if boolean is true
             howMany = key ? collection.length : 1;
             var metaHandler = function (meta) {
-                out[meta.key] = meta.val;
+                out[meta.key] = meta.value;
             };
             var updateHandler = function (update) {
                 utils.each(update.meta, function (meta) {
-                    out[meta.key] = meta.val;
+                    out[meta.key] = meta.value;
                 });
             };
             for (var i = 0; i < howMany; i++) {
@@ -233,18 +232,18 @@
 
     // TODO: see how much of this code can be merged with attr and proxied through there
     // same as `.attr` but only for meta (i.e. without title/created/creator/body)
-    function meta(collection, key, val) {
-        if (utils.isObject(key) || (typeof key === 'string' && typeof val === 'string')) {
-            return attr(collection, key, val);
+    function meta(collection, key, value) {
+        if (utils.isObject(key) || (typeof key === 'string' && typeof value === 'string')) {
+            return attr(collection, key, value);
         } else if (typeof key === 'string') {
             // TODO: move get meta from `.attr` method to here, let `.attr` call this, and augment it
-            return attr(collection, key, val);
+            return attr(collection, key, value);
         } else if (arguments.length === 0 || typeof key === 'boolean') {
             var arr = [];
             var howMany = key ? collection.length : 1;
             var metaHandler = function (meta) {
-                    out[meta.key] = meta.val;
-                };
+                out[meta.key] = meta.value;
+            };
             for (var i = 0; i < howMany; i++) {
                 var out = {};
                 utils.each(collection[i].meta, metaHandler);
@@ -279,14 +278,14 @@
         return out;
     }
 
-    function filterByAttr(collection, key, valIn) {
-        var vals = issuemd.utils.typeof(valIn) === 'array' ? valIn : [valIn];
+    function filterByAttr(collection, key, valueIn) {
+        var values = issuemd.utils.typeof(valueIn) === 'array' ? valueIn : [valueIn];
         return filterByFunction(collection, function (issue) {
-            var attrVal = issue.attr(key),
+            var attrValue = issue.attr(key),
                 match = false;
-            issuemd.utils.each(vals, function (val) {
+            issuemd.utils.each(values, function (value) {
                 // TODO: evaluate value equality test - should we continue to use `toString`?
-                if (!match && (issuemd.utils.typeof(val) === 'regexp' && val.test(attrVal)) || attrVal === val.toString()) {
+                if (!match && (issuemd.utils.typeof(value) === 'regexp' && value.test(attrValue)) || attrValue === value.toString()) {
                     match = true;
                     return match;
                 }
@@ -406,13 +405,13 @@
                 },
                 updates: []
             };
-            utils.each(input, function (val, key) {
+            utils.each(input, function (value, key) {
                 if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
-                    build.original[key] = val;
+                    build.original[key] = value;
                 } else {
                     build.original.meta.push({
                         key: key,
-                        val: val
+                        value: value
                     });
                 }
             });
@@ -422,13 +421,13 @@
                     var build = {
                         meta: []
                     };
-                    utils.each(update, function (val, key) {
+                    utils.each(update, function (value, key) {
                         if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
-                            build[key] = val;
+                            build[key] = value;
                         } else {
                             build.meta.push({
                                 key: key,
-                                val: val
+                                value: value
                             });
                         }
                     });
@@ -498,7 +497,8 @@
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
             // TODO: should exports be set here - inspired by underscore.js pattern - jshint says it's readonly!
-            /*exports = */module.exports = issuemd;
+            /*exports = */
+            module.exports = issuemd;
         }
         exports.issuemd = issuemd;
     } else {

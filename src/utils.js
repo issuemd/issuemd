@@ -55,12 +55,12 @@ module.exports = {
         });
         return out;
     },
-    // takes hash and returns array of key/val objects
+    // takes hash and returns array of key/value objects
     toKeyVal: function (input) {
-        return this.mapToArray(input, function (val, key) {
+        return this.mapToArray(input, function (value, key) {
             return {
                 key: key,
-                val: val
+                value: value
             };
         });
     },
@@ -83,9 +83,9 @@ module.exports = {
     arrayWrap: function (input) {
         return this.typeof(input) !== 'array' ? [input] : input;
     },
-    indexOf: function (arr, val, from) {
+    indexOf: function (arr, value, from) {
         // TODO: should we cache a copy of `[]` as `arr` and use `arr.indexOf` instead of `Array.prototype.indexOf` - other libs seem to do that
-        return arr === null || arr === undefined ? -1 : Array.prototype.indexOf.call(arr, val, from);
+        return arr === null || arr === undefined ? -1 : Array.prototype.indexOf.call(arr, value, from);
     },
     // adapted from from underscore.js
     each: function (obj, iteratee, context) {
@@ -113,8 +113,8 @@ module.exports = {
     },
     mapToArray: function (arr, iteratee) {
         var results = [];
-        this.each(arr, function (val, index) {
-            results.push(iteratee(val, index, arr));
+        this.each(arr, function (value, index) {
+            results.push(iteratee(value, index, arr));
         });
         return results;
     },

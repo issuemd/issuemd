@@ -47,7 +47,7 @@ module.exports = function (issuemd) {
             '    <ul class="original-attr">',
             '      <li><b>creator:</b> {{{creator}}}</li>',
             '      <li><b>created:</b> {{created}}</li>',
-            '{{#meta}}      <li><b>{{key}}:</b> {{{val}}}</li>',
+            '{{#meta}}      <li><b>{{key}}:</b> {{{value}}}</li>',
             '{{/meta}}    </ul>',
             '  </div>',
             '  <div class="body">',
@@ -61,7 +61,7 @@ module.exports = function (issuemd) {
             '    <li><b>type:</b> {{type}}</li>',
             '    <li><b>modified:</b> {{modified}}</li>',
             '    <li><b>modifier:</b> {{{modifier}}}</li>',
-            '{{#meta}}    <li><b>{{key}}:</b> {{{val}}}</li>{{/meta}}  </ul>',
+            '{{#meta}}    <li><b>{{key}}:</b> {{{value}}}</li>{{/meta}}  </ul>',
             '  <div class="update-body">',
             '    {{{body}}}  </div>',
             '  </div>',
@@ -86,7 +86,7 @@ module.exports = function (issuemd) {
                 '+ created: {{created}}',
                 '+ creator: {{{creator}}}',
                 '{{#meta}}',
-                '+ {{key}}: {{{val}}}',
+                '+ {{key}}: {{{value}}}',
                 '{{/meta}}',
                 '',
                 '{{{body}}}',
@@ -97,7 +97,7 @@ module.exports = function (issuemd) {
                 '+ modified: {{modified}}',
                 '+ modifier: {{{modifier}}}',
                 '{{#meta}}',
-                '+ {{key}}: {{{val}}}',
+                '+ {{key}}: {{{value}}}',
                 '{{/meta}}',
                 '{{#body}}',
                 '',
@@ -178,7 +178,7 @@ module.exports = function (issuemd) {
             return content + repeat(' ', widest - content.length);
         };
     };
-    var val = function () {
+    var value = function () {
         return function (str, render) {
             return render(str) + repeat(' ', (cols || 80) - 7 - widest - render(str).length);
         };
@@ -215,7 +215,7 @@ module.exports = function (issuemd) {
             util: {
                 body: body,
                 key: key,
-                val: val,
+                value: value,
                 pad: pad,
                 pad6: pad6,
                 pad12: pad12,
@@ -247,32 +247,32 @@ module.exports = function (issuemd) {
 
         var template = templateOverride ? templateOverride : [
             '{{#data}}',
-            '+-{{#util.pad}}-{{/util.pad                                                   }}-+',
+            '+-{{#util.pad}}-{{/util.pad                                                       }}-+',
             '{{#title}}',
-            '| {{#util.body}}{{{.}}}{{/util.body                                           }} |',
+            '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
             '{{/title}}',
-            '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+',
-            '| {{#util.key}}created{{/util.key  }} | {{#util.val}}{{{created}}}{{/util.val }} |',
-            '| {{#util.key}}creator{{/util.key  }} | {{#util.val}}{{{creator}}}{{/util.val }} |',
+            '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+',
+            '| {{#util.key}}created{{/util.key  }} | {{#util.value}}{{{created}}}{{/util.value }} |',
+            '| {{#util.key}}creator{{/util.key  }} | {{#util.value}}{{{creator}}}{{/util.value }} |',
             '{{#meta}}',
-            '| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.val}}{{{val}}}{{/util.val     }} |',
+            '| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.value}}{{{value}}}{{/util.value   }} |',
             '{{/meta}}',
-            '| {{#util.pad}} {{/util.pad                                                   }} |',
+            '| {{#util.pad}} {{/util.pad                                                       }} |',
             '{{#body}}',
-            '| {{#util.body}}{{{.}}}{{/util.body                                           }} |',
+            '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
             '{{/body}}',
             '{{#comments}}',
-            '| {{#util.pad}} {{/util.pad                                                   }} |',
-            '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright   }}-+',
-            '| {{#util.key}}type{{/util.key     }} | {{#util.val}}{{{type}}}{{/util.val    }} |',
-            '| {{#util.key}}modified{{/util.key }} | {{#util.val}}{{{modified}}}{{/util.val}} |',
-            '| {{#util.key}}modifier{{/util.key }} | {{#util.val}}{{{modifier}}}{{/util.val}} |',
-            '| {{#util.pad}} {{/util.pad                                                   }} |',
+            '| {{#util.pad}} {{/util.pad                                                       }} |',
+            '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+',
+            '| {{#util.key}}type{{/util.key     }} | {{#util.value}}{{{type}}}{{/util.value    }} |',
+            '| {{#util.key}}modified{{/util.key }} | {{#util.value}}{{{modified}}}{{/util.value}} |',
+            '| {{#util.key}}modifier{{/util.key }} | {{#util.value}}{{{modifier}}}{{/util.value}} |',
+            '| {{#util.pad}} {{/util.pad                                                       }} |',
             '{{#body}}',
-            '| {{#util.body}}{{{.}}}{{/util.body                                           }} |',
+            '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
             '{{/body}}',
             '{{/comments}}',
-            '+-{{#util.pad}}-{{/util.pad                                                   }}-+',
+            '+-{{#util.pad}}-{{/util.pad                                                       }}-+',
             '{{/data}}'
         ].join('\n');
 
@@ -289,18 +289,18 @@ module.exports = function (issuemd) {
 
                 // TODO: better handling of ensuring minimum size of composite fields are met
                 widest = 'signature'.length;
-                utils.each(issue.attr(), function (val, key) {
+                utils.each(issue.attr(), function (value, key) {
                     if (key === 'title' || key === 'body') {
-                        data[key] = splitLines(val);
+                        data[key] = splitLines(value);
                     } else if (key === 'created' || key === 'creator') {
-                        data[key] = val;
+                        data[key] = value;
                         if (key.length > widest) {
                             widest = key.length;
                         }
                     } else {
                         data.meta.push({
                             key: key,
-                            val: val
+                            value: value
                         });
                         if (key.length > widest) {
                             widest = key.length;
@@ -308,16 +308,16 @@ module.exports = function (issuemd) {
                     }
                 });
 
-                utils.each(issue.comments(), function (val) {
-                    val.body = splitLines(val.body);
-                    data.comments.push(val);
+                utils.each(issue.comments(), function (value) {
+                    value.body = splitLines(value.body);
+                    data.comments.push(value);
                 });
 
                 out.push(renderMustache(template, {
                     util: {
                         body: body,
                         key: key,
-                        val: val,
+                        value: value,
                         pad: pad,
                         padleft: padleft,
                         padright: padright

@@ -51,7 +51,7 @@ module.exports = function () {
                 created: '2012-03-04 10:22:03',
                 meta: [{
                     key: 'labels',
-                    val: 'important, easy'
+                    value: 'important, easy'
                 }],
                 body: 'Just a simple issue with meta'
             },
