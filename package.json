@@ -4,6 +4,7 @@
   "description": "issue tracking in hand",
   "main": "issuemd.min.js",
   "scripts": {
+    "start": "npm run format && npm run lint && npm run test && npm build",
     "format": "js-beautify -r src/*.js test/*.js",
     "lint": "jshint src test",
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
