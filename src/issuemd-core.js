@@ -3,11 +3,159 @@
 // module layout inspired by underscore
 ! function () {
 
-    var issuemd; // defined later in this file
-    // formatter required later, to allow passing of issuemd
-    var parser = require('../issuemd-parser.min.js');
-    var merger = require('./issuemd-merger.js');
-    var utils = require('./utils.js');
+    var formatter = issuemd.formatter = require('./issuemd-formatter.js')(issuemd);
+    var parser = issuemd.parser = require('../issuemd-parser.min.js');
+    var merger = issuemd.merger = require('./issuemd-merger.js');
+    var utils = issuemd.utils = require('./utils.js');
+
+    var root = this;
+
+    issuemd.version = '0.1.0';
+
+    // API Methods
+    // extendable by adding to `issuemd.fn` akin to jQuery plugins
+    issuemd.fn = Issuemd.prototype = {
+
+        // don't use default object constructor so we can identify collections later on
+        constructor: Issuemd,
+
+        // enable collections to behave like an Array
+        length: 0,
+        toArray: function () {
+            return [].slice.call(this);
+        },
+        push: [].push,
+        sort: [].sort,
+        splice: [].splice,
+        pop: [].pop,
+
+        // expose useful functions publicly
+        toJSON: passThis(toJSON),
+        toString: passThis(toString),
+        md: passThis(md),
+        html: passThis(html),
+        summary: passThis(summary),
+        clone: passThis(clone),
+        eq: passThis(eq),
+        each: passThis(each),
+        remove: passThis(remove),
+        update: passThis(update),
+        merge: passThis(localmerge),
+        attr: passThis(attr),
+        signature: passThis(signature),
+        hash: passThis(hash),
+        meta: passThis(meta),
+        comments: passThis(comments),
+        filter: passThis(filter),
+
+        /* * * * * *
+         * Mixins  *
+         * * * * * */
+
+        sortUpdates: require('./plugins/issuemd.sort-updates.js')
+
+    };
+
+    // hook module into AMD/require etc...
+
+    if (typeof exports !== 'undefined') {
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = issuemd;
+        }
+        exports.issuemd = issuemd;
+    } else {
+        root.issuemd = issuemd;
+    }
+
+    if (typeof define === 'function' && define.amd) {
+        define('issuemd', [], function () {
+            return issuemd;
+        });
+    }
+
+    /* * * * * * *
+     * Functions *
+     * * * * * * */
+
+    // main entry point for issuemd api
+    // jquery like chained api inspired by: http://blog.buymeasoda.com/creating-a-jquery-like-chaining-api/
+    function issuemd() {
+
+        // http://stackoverflow.com/a/14378462/665261
+        function factoryBuilder(constructor) {
+            var instance = Object.create(constructor.prototype);
+            var result = constructor.apply(instance, Array.prototype.slice.call(arguments, 1));
+            return (result !== null && typeof result === 'object') ? result : instance;
+        }
+
+        var issuemdFactory = factoryBuilder.bind(null, Issuemd);
+        return issuemdFactory.apply(null, arguments);
+
+    }
+
+    // issuemd constructor function
+    function Issuemd(input, arg2) {
+
+        // if there is no input, return a collection with no issues
+        if (input === null || input === undefined) {
+            makeIssues(this, 0);
+            return this;
+        }
+
+        // if collection passed in, just return it without further ado
+        if (input instanceof issuemd.fn.constructor) {
+            return input;
+        }
+
+        if (utils.typeof(input) === 'object') {
+            var build = {
+                original: {
+                    meta: []
+                },
+                updates: []
+            };
+            utils.each(input, function (value, key) {
+                if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
+                    build.original[key] = value;
+                } else {
+                    build.original.meta.push({
+                        key: key,
+                        value: value
+                    });
+                }
+            });
+            if (utils.typeof(arg2) === 'array' || (utils.typeof(arg2) === 'object' && (arg2 = [].slice.call(arguments, 1)))) {
+                var updates = [];
+                utils.each(arg2, function (update) {
+                    var build = {
+                        meta: []
+                    };
+                    utils.each(update, function (value, key) {
+                        if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
+                            build[key] = value;
+                        } else {
+                            build.meta.push({
+                                key: key,
+                                value: value
+                            });
+                        }
+                    });
+                    updates.push(build);
+                });
+                build.updates = updates;
+            }
+            input = build;
+        }
+
+        // assume input is issue like, and try to return it as a collection
+        var arr = issueArrayFromAnything(input);
+        for (var i = 0; i < arr.length; i++) {
+            localmerge(this, arr[i]);
+        }
+
+        return this;
+
+    }
 
     // serialize issue data object into issuemd style JSON
     function toJSON(collection) {
@@ -338,171 +486,11 @@
         return utils.trim(creator) + ' @ ' + utils.trim(created);
     }
 
-    var root = this;
-
-    // main entry point for issuemd api
-    // jquery like chained api inspired by: http://blog.buymeasoda.com/creating-a-jquery-like-chaining-api/
-    issuemd = function () {
-
-        // http://stackoverflow.com/a/14378462/665261
-        function factoryBuilder(constructor) {
-            var instance = Object.create(constructor.prototype);
-            var result = constructor.apply(instance, Array.prototype.slice.call(arguments, 1));
-            return (result !== null && typeof result === 'object') ? result : instance;
-        }
-
-        var issuemdFactory = factoryBuilder.bind(null, Issuemd);
-        return issuemdFactory.apply(null, arguments);
-
-    };
-
-    issuemd.version = '0.1.0';
-
-    // get the core components in place
-    var formatter = require('./issuemd-formatter.js')(issuemd);
-    issuemd.formatter = formatter;
-    issuemd.parser = parser;
-    issuemd.merge = merger;
-    issuemd.utils = utils;
-
-    // issuemd constructor function
-    var Issuemd = function (input, arg2) {
-
-        // if there is no input, return a collection with no issues
-        if (input === null || input === undefined) {
-            makeIssues(this, 0);
-            return this;
-        }
-
-        // if collection passed in, just return it without further ado
-        if (input instanceof issuemd.fn.constructor) {
-            return input;
-        }
-
-        if (utils.typeof(input) === 'object') {
-            var build = {
-                original: {
-                    meta: []
-                },
-                updates: []
-            };
-            utils.each(input, function (value, key) {
-                if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
-                    build.original[key] = value;
-                } else {
-                    build.original.meta.push({
-                        key: key,
-                        value: value
-                    });
-                }
-            });
-            if (utils.typeof(arg2) === 'array' || (utils.typeof(arg2) === 'object' && (arg2 = [].slice.call(arguments, 1)))) {
-                var updates = [];
-                utils.each(arg2, function (update) {
-                    var build = {
-                        meta: []
-                    };
-                    utils.each(update, function (value, key) {
-                        if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
-                            build[key] = value;
-                        } else {
-                            build.meta.push({
-                                key: key,
-                                value: value
-                            });
-                        }
-                    });
-                    updates.push(build);
-                });
-                build.updates = updates;
-            }
-            input = build;
-        }
-
-        // assume input is issue like, and try to return it as a collection
-        var arr = issueArrayFromAnything(input);
-        for (var i = 0; i < arr.length; i++) {
-            localmerge(this, arr[i]);
-        }
-
-        return this;
-
-    };
-
     function passThis(fn) {
         return function () {
             [].unshift.call(arguments, this);
             return fn.apply(this, arguments);
         };
     }
-
-    // API Methods
-    // extendable by adding to `issuemd.fn` akin to jQuery plugins
-    issuemd.fn = Issuemd.prototype = {
-
-        // don't use default object constructor so we can identify collections later on
-        constructor: Issuemd,
-
-        // enable collections to behave like an Array
-        length: 0,
-        toArray: function () {
-            return [].slice.call(this);
-        },
-        push: [].push,
-        sort: [].sort,
-        splice: [].splice,
-        pop: [].pop,
-
-        // expose useful functions publicly
-        toJSON: passThis(toJSON),
-        toString: passThis(toString),
-        md: passThis(md),
-        html: passThis(html),
-        summary: passThis(summary),
-        clone: passThis(clone),
-        eq: passThis(eq),
-        each: passThis(each),
-        remove: passThis(remove),
-        update: passThis(update),
-        merge: passThis(localmerge),
-        attr: passThis(attr),
-        signature: passThis(signature),
-        hash: passThis(hash),
-        meta: passThis(meta),
-        comments: passThis(comments),
-        filter: passThis(filter)
-    };
-
-    // hook module into AMD/require etc...
-
-    if (typeof exports !== 'undefined') {
-        if (typeof module !== 'undefined' && module.exports) {
-            module.exports = issuemd;
-        }
-        exports.issuemd = issuemd;
-    } else {
-        root.issuemd = issuemd;
-    }
-
-    if (typeof define === 'function' && define.amd) {
-        define('issuemd', [], function () {
-            return issuemd;
-        });
-    }
-
-    /* * * * * *
-     * mixins  *
-     * * * * * */
-
-    issuemd.fn.sortUpdates = function () {
-        this.each(function (issue) {
-
-            issue[0].updates.sort(function (a, b) {
-                return (new Date(a.modified)) - (new Date(b.modified));
-            });
-
-        });
-        return this;
-    };
 
 }();
