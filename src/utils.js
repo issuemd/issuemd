@@ -84,8 +84,8 @@ module.exports = {
         return this.typeof(input) !== 'array' ? [input] : input;
     },
     indexOf: function (arr, value, from) {
-        // TODO: should we cache a copy of `[]` as `arr` and use `arr.indexOf` instead of `Array.prototype.indexOf` - other libs seem to do that
-        return arr === null || arr === undefined ? -1 : Array.prototype.indexOf.call(arr, value, from);
+        // perhaps could cache a copy of `[]` if used more often
+        return arr === null || arr === undefined ? -1 : [].indexOf.call(arr, value, from);
     },
     // adapted from from underscore.js
     each: function (obj, iteratee, context) {
@@ -111,16 +111,16 @@ module.exports = {
         }
         return obj;
     },
-    mapToArray: function (arr, iteratee) {
+    map: function (arr, iteratee) {
         var results = [];
-        this.each(arr, function (value, index) {
-            results.push(iteratee(value, index, arr));
-        });
+        for (var index = 0; index < arr.length; index++) {
+            results[index] = iteratee(arr[index], index, arr);
+        }
         return results;
     },
-    // return firstbits hash of input, optionally specify `size` which defaults to 6
+    // return firstbits hash of input, optionally specify `size` which defaults to 32
     hash: function (string, size) {
-        return require('blueimp-md5').md5(string).slice(0, size || 6);
+        return require('blueimp-md5').md5(string).slice(0, size || 32);
     },
     trim: function (string) {
         return string.replace(/(^\s+|\s+$)/g, '');
