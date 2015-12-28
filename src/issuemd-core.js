@@ -6,13 +6,12 @@
     var formatter = issuemd.formatter = require('./issuemd-formatter.js')(issuemd);
     var parser = issuemd.parser = require('../issuemd-parser.min.js');
     var merger = issuemd.merger = require('./issuemd-merger.js');
-    // var utils = issuemd.utils = require('./utils.js');
 
     var root = this;
 
     issuemd.version = '0.0.0';
 
-    issuemd.fn = Issuemd.prototype = {
+    issuemd.fn = Issuemd.prototype = extend({
 
         // don't use default object constructor so we can identify collections later on
         constructor: Issuemd,
@@ -30,34 +29,13 @@
         splice: [].splice,
         pop: [].pop,
 
-        // expose useful functions publicly
-        add: issuemdAddIssueToCollection,
-        toString: issuemdToString,
-        attr: issuemdAttr,
-        each: issuemdEach,
-        comments: issuemdComments,
-        merge: issuemdMerge,
-        md: issuemdMd,
-        hash: issuemdHash,
-        eq: issuemdEq,
-        filter: issuemdFilter,
-        summary: issuemdSummary,
-        update: issuemdUpdate,
         sortUpdates: require('./plugins/issuemd.sort-updates.js')
 
-        // TODO: re-implement these currently unused methods
+    }, getMethods());
 
-        // toJSON: passThis(toJSON),
-        // html: passThis(html),
-        // clone: passThis(clone),
-        // remove: passThis(remove),
-        // signature: passThis(signature),
-
-    };
-
-    /***************
+    /****************
      * main objects *
-     ***************/
+     ****************/
 
     function issuemd(arr) {
 
@@ -109,9 +87,9 @@
 
     function Issue() {}
 
-    /************
+    /*************
      * factories *
-     ************/
+     *************/
 
     function createIssue(issueJson) {
 
@@ -133,149 +111,164 @@
 
     }
 
-    /******************
+    /*******************
      * issuemd methods *
-     ******************/
+     *******************/
 
-    function issuemdToString(cols, templateOverride) {
-        return formatter.string(this.toArray(), cols, templateOverride);
-    }
+    function getMethods() {
 
-    // accepts `input` object including modifier, modified
-    function issuemdUpdate(input /*...*/ ) {
+        // TODO: re-implement these currently unused methods
+        // toJSON: passThis(toJSON),
+        // html: passThis(html),
+        // clone: passThis(clone),
+        // remove: passThis(remove),
+        // signature: passThis(signature),
 
-        if (type(input) !== 'array') {
-            input = [].slice.call(arguments);
-        }
-        var updates = [];
-        each(input, function (update) {
-            var build = {
-                meta: []
-            };
-            each(update, function (value, key) {
-                if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
-                    build[key] = value;
-                } else {
-                    build.meta.push({
-                        key: key,
-                        value: value
+        return {
+
+            toString: function (cols, templateOverride) {
+                return formatter.string(this.toArray(), cols, templateOverride);
+            },
+
+            // accepts `input` object including modifier, modified
+            update: function (input /*...*/ ) {
+
+                if (type(input) !== 'array') {
+                    input = [].slice.call(arguments);
+                }
+                var updates = [];
+                each(input, function (update) {
+                    var build = {
+                        meta: []
+                    };
+                    each(update, function (value, key) {
+                        if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
+                            build[key] = value;
+                        } else {
+                            build.meta.push({
+                                key: key,
+                                value: value
+                            });
+                        }
                     });
+                    build.modified = build.modified || now();
+                    updates.push(build);
+                });
+
+                each(this, function (issue) {
+                    issue.updates = issue.updates || [];
+                    // must retain original reference to array, not copy, hence...
+                    [].push.apply(issue.updates, updates);
+                });
+
+                return this;
+            },
+
+            // return string summary table of collection
+            summary: function (cols, templateOverride) {
+                return formatter.summary(this.toArray(), cols, templateOverride);
+            },
+
+            hash: function ( /*all*/ ) {
+                var all = arguments[arguments.length - 1];
+                var arr = [];
+                var howMany = typeof all === 'boolean' && all ? this.length : 1;
+                var length = typeof arguments[1] === 'number' ? arguments[1] : undefined;
+                for (var i = 0; i < howMany; i++) {
+                    arr.push(hash(signature(this.eq(i)), length));
                 }
-            });
-            build.modified = build.modified || now();
-            updates.push(build);
-        });
+                return typeof all === 'boolean' && all ? arr : arr[0];
+            },
 
-        each(this, function (issue) {
-            issue.updates = issue.updates || [];
-            // must retain original reference to array, not copy, hence...
-            [].push.apply(issue.updates, updates);
-        });
+            merge: function (input) {
 
-        return this;
-    }
+                var hashes = this.hash(true);
 
-    // return string summary table of collection
-    function issuemdSummary(cols, templateOverride) {
-        return formatter.summary(this.toArray(), cols, templateOverride);
-    }
+                var that = this;
 
-    function issuemdHash( /*all*/ ) {
-        var all = arguments[arguments.length - 1];
-        var arr = [];
-        var howMany = typeof all === 'boolean' && all ? this.length : 1;
-        var length = typeof arguments[1] === 'number' ? arguments[1] : undefined;
-        for (var i = 0; i < howMany; i++) {
-            arr.push(hash(signature(this.eq(i)), length));
-        }
-        return typeof all === 'boolean' && all ? arr : arr[0];
-    }
+                each(input, function (issue) {
+                    var idx;
+                    var merged = false;
+                    var issueHash = hash(composeSignature(issue.original.creator, issue.original.created));
+                    if ((idx = hashes.indexOf(issueHash)) !== -1) {
+                        merger(that[idx], issue);
+                        merged = true;
+                    }
+                    if (!merged) {
+                        that.push(issue);
+                    }
+                });
 
-    function issuemdMerge(input) {
+                return that;
 
-        var hashes = this.hash(true);
+            },
 
-        var that = this;
+            eq: function (index) {
+                var newCollection = issuemd();
+                newCollection.push(this[index]);
+                return newCollection;
+            },
 
-        each(input, function (issue) {
-            var idx;
-            var merged = false;
-            var issueHash = hash(composeSignature(issue.original.creator, issue.original.created));
-            if ((idx = hashes.indexOf(issueHash)) !== -1) {
-                merger(that[idx], issue);
-                merged = true;
-            }
-            if (!merged) {
-                that.push(issue);
-            }
-        });
-
-        return that;
-
-    }
-
-    function issuemdEq(index) {
-        var newCollection = issuemd();
-        newCollection.push(this[index]);
-        return newCollection;
-    }
-
-    // TODO: rationalise function signature
-    function issuemdMd(input, templateOverride) {
-        if (typeof input === 'string') {
-            return this.merge(input);
-        } else {
-            return formatter.md(this.toArray(), templateOverride);
-        }
-    }
-
-    // loops over each issue - like underscore's each
-    function issuemdEach(func) {
-        each(this, function (item) {
-            func(issuemd([item]));
-        });
-        return this;
-    }
-
-    function issuemdAttr(attrs) {
-        if (!attrs) {
-            return issueJsonToLoose(this.toArray()[0]);
-        } else if (type(attrs) === 'string') {
-            return this.attr()[attrs];
-        } else {
-            each(this, function (issue) {
-                var issueJsonIn = looseJsonToIssueJson(attrs, true);
-                issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta); // TODO: unique
-                issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates); // TODO: unique
-                issue.original = extend(issue.original, issueJsonIn.original);
-            });
-            return this;
-        }
-    }
-
-    function issuemdAddIssueToCollection(issueJson) {
-        this.push(createIssue(issueJson));
-    }
-
-    function issuemdComments() {
-        if (this[0]) {
-            var out = [];
-            each(this[0].updates, function (update) {
-                if (type(update.body) === 'string' && update.body.length) {
-                    out.push(copy(update));
+            // TODO: rationalise function signature
+            md: function (input, templateOverride) {
+                if (typeof input === 'string') {
+                    return this.merge(input);
+                } else {
+                    return formatter.md(this.toArray(), templateOverride);
                 }
-            });
-            return out;
-        }
+            },
+
+            // loops over each issue - like underscore's each
+            each: function (func) {
+                each(this, function (item) {
+                    func(issuemd([item]));
+                });
+                return this;
+            },
+
+            attr: function (attrs) {
+                if (!attrs) {
+                    return issueJsonToLoose(this.toArray()[0]);
+                } else if (type(attrs) === 'string') {
+                    return this.attr()[attrs];
+                } else {
+                    each(this, function (issue) {
+                        var issueJsonIn = looseJsonToIssueJson(attrs, true);
+                        issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta); // TODO: unique
+                        issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates); // TODO: unique
+                        issue.original = extend(issue.original, issueJsonIn.original);
+                    });
+                    return this;
+                }
+            },
+
+            add: function (issueJson) {
+                this.push(createIssue(issueJson));
+            },
+
+            comments: function () {
+                if (this[0]) {
+                    var out = [];
+                    each(this[0].updates, function (update) {
+                        if (type(update.body) === 'string' && update.body.length) {
+                            out.push(copy(update));
+                        }
+                    });
+                    return out;
+                }
+            },
+
+            filter: function (first, second) {
+                return second ? filterByAttr(this, first, second) : filterByFunction(this, first);
+            }
+
+        };
+
     }
 
-    function issuemdFilter(first, second) {
-        return second ? filterByAttr(this, first, second) : filterByFunction(this, first);
-    }
-
-    /*************************
+    /**************************
      * issuemd specific utils *
-     *************************/
+     **************************/
 
     function filterByFunction(collection, filterFunction) {
         var out = issuemd();
@@ -368,9 +361,10 @@
         return require('blueimp-md5').md5(string).slice(0, size || 32);
     }
 
-    /****************
+    // TODO: should these be moved back into utils - are they shared between libs?
+    /*****************
      * general utils *
-     ****************/
+     *****************/
 
     function copy(input) {
         return JSON.parse(JSON.stringify(input));
@@ -435,9 +429,9 @@
         return original;
     }
 
-    /**************************************
+    /***************************************
      * hook module into AMD/require etc... *
-     **************************************/
+     ***************************************/
 
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
