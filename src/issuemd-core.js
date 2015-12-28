@@ -3,9 +3,8 @@
 // module layout inspired by underscore
 ! function () {
 
-    var formatter = issuemd.formatter = require('./issuemd-formatter.js')(issuemd);
+    var formatter = issuemd.formatter = formatterMaker();
     var parser = issuemd.parser = require('../issuemd-parser.min.js');
-    var merger = issuemd.merger = require('./issuemd-merger.js');
 
     var root = this;
 
@@ -270,6 +269,427 @@
      * issuemd specific utils *
      **************************/
 
+    function formatterMaker() {
+
+        var mustache = require('mustache'),
+            // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
+            marked = require('marked');
+
+        /* mustache helper functions */
+
+        // TODO: better handling of the widest element
+        var widest = 0;
+        var cols = 80;
+        var curtailed = function () {
+            return function (str, render) {
+                var content = render(str);
+                return curtail(content + repeat(' ', (cols || 80) - 4 - content.length), (cols || 80) - 4);
+            };
+        };
+
+        var body = function () {
+            return function (str, render) {
+                var content = render(str);
+                return content + repeat(' ', (cols || 80) - 4 - content.length);
+            };
+        };
+
+        var padleft = function () {
+            return function (str, render) {
+                return repeat(render(str), widest);
+            };
+        };
+
+        var padright = function () {
+            return function (str, render) {
+                return repeat(render(str), (cols || 80) - widest - 7);
+            };
+        };
+
+        var pad12 = function () {
+            return function (str, render) {
+                return (render(str) + '            ').substr(0, 12);
+            };
+        };
+
+        var key = function () {
+            return function (str, render) {
+                var content = render(str);
+                return content + repeat(' ', widest - content.length);
+            };
+        };
+        var value = function () {
+            return function (str, render) {
+                return render(str) + repeat(' ', (cols || 80) - 7 - widest - render(str).length);
+            };
+        };
+
+        function pad() {
+            return function (str, render) {
+                return repeat(render(str), (cols || 80) - 4);
+            };
+        }
+
+        function pad6() {
+            return function (str, render) {
+                return (render(str) + '      ').substr(0, 6);
+            };
+        }
+
+        return {
+            render: {
+                markdown: renderMarkdown,
+                mustache: renderMustache
+            },
+            md: json2md,
+            html: json2html,
+            string: json2string,
+            summary: json2summaryTable
+        };
+
+        function json2summaryTable(issueJSObject, colsIn, templateOverride) {
+
+            cols = colsIn || cols;
+
+            var data = [];
+            each(issuemd(issueJSObject), function (issue) {
+                var attr = issuemd(issue).attr();
+                data.push({
+                    title: attr.title,
+                    creator: attr.creator,
+                    id: attr.id,
+                    assignee: attr.assignee,
+                    status: attr.status
+                });
+            });
+
+            var template = templateOverride ? templateOverride : [
+                '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
+                '| {{#util.curtailed}}ID     Assignee     Status       Title{{/util.curtailed                           }} |',
+                '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
+                '{{#data}}',
+                '| {{#util.curtailed}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}}' +
+                ' {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.curtailed                           }} |',
+                '{{/data}}',
+                '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
+            ].join('\n');
+
+            return renderMustache(template, {
+                util: {
+                    body: body,
+                    key: key,
+                    value: value,
+                    pad: pad,
+                    pad6: pad6,
+                    pad12: pad12,
+                    padleft: padleft,
+                    padright: padright,
+                    curtailed: curtailed
+                },
+                data: data
+            });
+
+        }
+
+        function json2string(issueJSObject, colsIn, templateOverride) {
+
+            cols = colsIn || cols;
+
+            var splitLines = function (input) {
+                var output = [];
+                var lines = wordwrap(input, ((cols || 80) - 4)).replace(/\n\n+/, '\n\n').split('\n');
+                each(lines, function (item) {
+                    if (item.length < ((cols || 80) - 4)) {
+                        output.push(item);
+                    } else {
+                        output = output.concat(item.match(new RegExp('.{1,' + ((cols || 80) - 4) + '}', 'g')));
+                    }
+                });
+                return output;
+            };
+
+            var template = templateOverride ? templateOverride : [
+                '{{#data}}',
+                '+-{{#util.pad}}-{{/util.pad                                                       }}-+',
+                '{{#title}}',
+                '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
+                '{{/title}}',
+                '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+',
+                '| {{#util.key}}created{{/util.key  }} | {{#util.value}}{{{created}}}{{/util.value }} |',
+                '| {{#util.key}}creator{{/util.key  }} | {{#util.value}}{{{creator}}}{{/util.value }} |',
+                '{{#meta}}',
+                '| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.value}}{{{value}}}{{/util.value   }} |',
+                '{{/meta}}',
+                '| {{#util.pad}} {{/util.pad                                                       }} |',
+                '{{#body}}',
+                '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
+                '{{/body}}',
+                '{{#comments}}',
+                '| {{#util.pad}} {{/util.pad                                                       }} |',
+                '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+',
+                '| {{#util.key}}type{{/util.key     }} | {{#util.value}}{{{type}}}{{/util.value    }} |',
+                '| {{#util.key}}modified{{/util.key }} | {{#util.value}}{{{modified}}}{{/util.value}} |',
+                '| {{#util.key}}modifier{{/util.key }} | {{#util.value}}{{{modifier}}}{{/util.value}} |',
+                '| {{#util.pad}} {{/util.pad                                                       }} |',
+                '{{#body}}',
+                '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
+                '{{/body}}',
+                '{{/comments}}',
+                '+-{{#util.pad}}-{{/util.pad                                                       }}-+',
+                '{{/data}}'
+            ].join('\n');
+
+            if (issueJSObject) {
+                var out = [],
+                    issues = issuemd(issueJSObject);
+                each(issues, function (issueJson) {
+
+                    var issue = issuemd(issueJson),
+                        data = {
+                            meta: [],
+                            comments: []
+                        };
+
+                    // TODO: better handling of ensuring minimum size of composite fields are met
+                    widest = 'signature'.length;
+                    each(issue.attr(), function (value, key) {
+                        if (key === 'title' || key === 'body') {
+                            data[key] = splitLines(value);
+                        } else if (key === 'created' || key === 'creator') {
+                            data[key] = value;
+                            if (key.length > widest) {
+                                widest = key.length;
+                            }
+                        } else {
+                            data.meta.push({
+                                key: key,
+                                value: value
+                            });
+                            if (key.length > widest) {
+                                widest = key.length;
+                            }
+                        }
+                    });
+
+                    each(issue.comments(), function (value) {
+                        value.body = splitLines(value.body);
+                        data.comments.push(value);
+                    });
+
+                    out.push(renderMustache(template, {
+                        util: {
+                            body: body,
+                            key: key,
+                            value: value,
+                            pad: pad,
+                            padleft: padleft,
+                            padright: padright
+                        },
+                        data: data
+                    }));
+
+                });
+
+                return out.join('\n');
+            }
+
+        }
+
+        function renderMarkdown(input) {
+            return marked(input);
+        }
+
+        function renderMustache(template, data) {
+            return mustache.render(template, data);
+        }
+
+        function json2html(issueJSObject, templateOverride) {
+
+            var i;
+
+            issueJSObject = type(issueJSObject) !== 'array' ? [issueJSObject] : issueJSObject;
+
+            var issue = copy(issueJSObject);
+
+            for (var j = issue.length; j--;) {
+                if (issue[j].original.body) {
+                    issue[j].original.body = marked(issue[j].original.body);
+                } else {
+                    issue[j].original.body = '';
+                }
+                for (i = issue[j].updates.length; i--;) {
+                    if (issue[j].updates[i].body) {
+                        issue[j].updates[i].body = marked(issue[j].updates[i].body);
+                    } else {
+                        issue[j].updates[i].body = '';
+                    }
+                }
+            }
+
+            var template = templateOverride ? templateOverride : [
+                '{{#.}}',
+                '<div class="issue">{{#original}}',
+                '<div class="original">',
+                '  <div class="head">',
+                '    <h2>{{{title}}}</h2>',
+                '    <ul class="original-attr">',
+                '      <li><b>creator:</b> {{{creator}}}</li>',
+                '      <li><b>created:</b> {{created}}</li>',
+                '{{#meta}}      <li><b>{{key}}:</b> {{{value}}}</li>',
+                '{{/meta}}    </ul>',
+                '  </div>',
+                '  <div class="body">',
+                '    {{{body}}}  </div>',
+                '</div>',
+                '{{/original}}{{#updates}}',
+                '<div class="updates">',
+                '  <hr class="update-divider">',
+                '  <div class="update">',
+                '  <ul class="update-attr">',
+                '    <li><b>type:</b> {{type}}</li>',
+                '    <li><b>modified:</b> {{modified}}</li>',
+                '    <li><b>modifier:</b> {{{modifier}}}</li>',
+                '{{#meta}}    <li><b>{{key}}:</b> {{{value}}}</li>{{/meta}}  </ul>',
+                '  <div class="update-body">',
+                '    {{{body}}}  </div>',
+                '  </div>',
+                '{{/updates}}</div>',
+                '</div>',
+                '{{/.}}'
+            ].join('\n');
+
+            // TODO: read templates from files, not strings
+            return renderMustache(template, issue);
+
+        }
+
+        function json2md(issueJSObject, templateOverride) {
+            if (issueJSObject) {
+
+                // use triple `{`s for title/value/body to retain special characters
+                // why do I need two newlines inserted before the `---` when there is one already trailing the `body`?
+                var template = templateOverride ? templateOverride : [
+                    '{{#.}}{{#original}}',
+                    '## {{{title}}}',
+                    '+ created: {{created}}',
+                    '+ creator: {{{creator}}}',
+                    '{{#meta}}',
+                    '+ {{key}}: {{{value}}}',
+                    '{{/meta}}',
+                    '',
+                    '{{{body}}}',
+                    '{{/original}}{{#updates}}',
+                    '',
+                    '---',
+                    '+ type: {{type}}',
+                    '+ modified: {{modified}}',
+                    '+ modifier: {{{modifier}}}',
+                    '{{#meta}}',
+                    '+ {{key}}: {{{value}}}',
+                    '{{/meta}}',
+                    '{{#body}}',
+                    '',
+                    '{{{.}}}',
+                    '{{/body}}',
+                    '{{/updates}}',
+                    '',
+                    '{{/.}}'
+                ].join('\n');
+
+                // TODO: figure out better way to handle trailing newlines after last issue
+                return renderMustache(template, issueJSObject).trim();
+            }
+        }
+
+        function repeat(char, qty) {
+            var out = '';
+            for (var i = 0; i < qty; i++) {
+                out += char;
+            }
+            return out;
+        }
+
+        function curtail(input, width) {
+            return input.length > width ? input.slice(0, width - 3) + '...' : input;
+        }
+
+    }
+
+    function merger(left, right) {
+
+        // inspired by: http://stackoverflow.com/a/6713782/665261
+        function objectsEqual(x, y) {
+            if (x === y) {
+                return true;
+            }
+            if (!(x instanceof Object) || !(y instanceof Object)) {
+                return false;
+            }
+            if (x.constructor !== y.constructor) {
+                return false;
+            }
+            for (var p in x) {
+                if (!x.hasOwnProperty(p)) {
+                    continue;
+                }
+                if (!y.hasOwnProperty(p)) {
+                    return false;
+                }
+                if (x[p] === y[p]) {
+                    continue;
+                }
+                if (typeof (x[p]) !== 'object') {
+                    return false;
+                }
+                if (!objectsEqual(x[p], y[p])) {
+                    return false;
+                }
+            }
+            for (p in y) {
+                if (y.hasOwnProperty(p) && !x.hasOwnProperty(p)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // TODO: should the merge happen in place or not?
+        // // take copies of inputs
+        // left = copy(left);
+        // right = copy(right);
+
+        var rightComments = copy(right.updates);
+
+        // concat and sort issues
+        var sorted = right.updates ? right.updates.concat(left.updates).sort(function (a, b) {
+            return a.modified > b.modified;
+        }) : left.updates;
+
+        var merged = [];
+        // remove duplicate entries
+        for (var i = 0; i < sorted.length; i++) {
+            if (JSON.stringify(sorted[i]) !== JSON.stringify(sorted[i - 1])) {
+                merged.push(sorted[i]);
+            }
+        }
+
+        // check inequality in issue head
+        left.updates = null;
+        right.updates = null;
+        if (!objectsEqual(left, right)) {
+            // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
+            console.log('issues are not identical - head must not be modified, only updates added');
+        }
+
+        // TODO: better way to ensure updates on right side remain untouched
+        right.updates = rightComments;
+
+        left.updates = merged;
+
+        return left;
+
+    }
+
     function filterByFunction(collection, filterFunction) {
         var out = issuemd();
         collection.each(function (item, index) {
@@ -427,6 +847,31 @@
             }
         }
         return original;
+    }
+
+    // initially from: http://phpjs.org/functions/wordwrap/
+    // TODO: rewrite this function to be more easily understood/maintained
+    function wordwrap(str, intWidth, strBreak, cut) {
+
+        intWidth = ((arguments.length >= 2) ? arguments[1] : 75);
+        strBreak = ((arguments.length >= 3) ? arguments[2] : '\n');
+        cut = ((arguments.length >= 4) ? arguments[3] : false);
+
+        var i, j, lineCount, line, result;
+
+        str += '';
+
+        if (intWidth < 1) {
+            return str;
+        }
+
+        for (i = -1, lineCount = (result = str.split(/\r\n|\n|\r/)).length; ++i < lineCount; result[i] += line) {
+            for (line = result[i], result[i] = ''; line.length > intWidth; result[i] += line.slice(0, j) + ((line = line.slice(j)).length && (line = line.replace(/^\s\b/, '') || true) ? strBreak : '')) {
+                j = cut === 2 || (j = line.slice(0, intWidth + 1).match(/\S*(\s)?$/))[1] ? intWidth : j.input.length - j[0].length || cut === 1 && intWidth || j.input.length + (j = line.slice(intWidth).match(/^\S*/))[0].length;
+            }
+        }
+
+        return result.join('\n');
     }
 
     /***************************************
