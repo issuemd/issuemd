@@ -9,7 +9,7 @@
     "lint": "jshint src test",
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
-    "build": "npm run build:parser && browserify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
+    "build": "npm run build:parser && browserify -t brfs -t browserify-versionify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
     "build:parser": "pegjs < src/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
     "bump": "npm run bump:patch",
     "bump:major": "npm --no-git-tag-version version major",
@@ -45,7 +45,9 @@
   },
   "devDependencies": {
     "blueimp-md5": "^1.1.1",
+    "brfs": "^1.4.1",
     "browserify": "^12.0.1",
+    "browserify-versionify": "^1.0.6",
     "chance": "^0.7.6",
     "js-beautify": "^1.5.10",
     "jshint": "^2.9.1-rc1",

@@ -3,12 +3,16 @@
 // module layout inspired by underscore
 ! function () {
 
-    var formatter = issuemd.formatter = formatterMaker();
-    var parser = issuemd.parser = require('../issuemd-parser.min.js');
+    var formatter = getFormatter();
+    var parser = require('../issuemd-parser.min.js');
 
     var root = this;
 
-    issuemd.version = '0.0.0';
+    issuemd.version = '__VERSION__';
+
+    issuemd.formatter = formatter;
+    issuemd.parser = parser;
+    issuemd.merger = merger;
 
     issuemd.fn = Issuemd.prototype = extend({
 
@@ -269,7 +273,9 @@
      * issuemd specific utils *
      **************************/
 
-    function formatterMaker() {
+    function getFormatter() {
+
+        var fs = require('fs');
 
         var mustache = require('mustache'),
             // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
@@ -363,16 +369,7 @@
                 });
             });
 
-            var template = templateOverride ? templateOverride : [
-                '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
-                '| {{#util.curtailed}}ID     Assignee     Status       Title{{/util.curtailed                           }} |',
-                '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
-                '{{#data}}',
-                '| {{#util.curtailed}}{{#util.pad6}}{{{id}}}{{/util.pad6}} {{#util.pad12}}{{{assignee}}}{{/util.pad12}}' +
-                ' {{#util.pad12}}{{{status}}}{{/util.pad12}} {{{title}}}{{/util.curtailed                           }} |',
-                '{{/data}}',
-                '+-{{#util.pad}}-{{/util.pad                                                                            }}-+',
-            ].join('\n');
+            var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8');
 
             return renderMustache(template, {
                 util: {
@@ -408,36 +405,7 @@
                 return output;
             };
 
-            var template = templateOverride ? templateOverride : [
-                '{{#data}}',
-                '+-{{#util.pad}}-{{/util.pad                                                       }}-+',
-                '{{#title}}',
-                '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
-                '{{/title}}',
-                '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+',
-                '| {{#util.key}}created{{/util.key  }} | {{#util.value}}{{{created}}}{{/util.value }} |',
-                '| {{#util.key}}creator{{/util.key  }} | {{#util.value}}{{{creator}}}{{/util.value }} |',
-                '{{#meta}}',
-                '| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.value}}{{{value}}}{{/util.value   }} |',
-                '{{/meta}}',
-                '| {{#util.pad}} {{/util.pad                                                       }} |',
-                '{{#body}}',
-                '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
-                '{{/body}}',
-                '{{#comments}}',
-                '| {{#util.pad}} {{/util.pad                                                       }} |',
-                '+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+',
-                '| {{#util.key}}type{{/util.key     }} | {{#util.value}}{{{type}}}{{/util.value    }} |',
-                '| {{#util.key}}modified{{/util.key }} | {{#util.value}}{{{modified}}}{{/util.value}} |',
-                '| {{#util.key}}modifier{{/util.key }} | {{#util.value}}{{{modifier}}}{{/util.value}} |',
-                '| {{#util.pad}} {{/util.pad                                                       }} |',
-                '{{#body}}',
-                '| {{#util.body}}{{{.}}}{{/util.body                                               }} |',
-                '{{/body}}',
-                '{{/comments}}',
-                '+-{{#util.pad}}-{{/util.pad                                                       }}-+',
-                '{{/data}}'
-            ].join('\n');
+            var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-string.mustache', 'utf8');
 
             if (issueJSObject) {
                 var out = [],
@@ -526,37 +494,7 @@
                 }
             }
 
-            var template = templateOverride ? templateOverride : [
-                '{{#.}}',
-                '<div class="issue">{{#original}}',
-                '<div class="original">',
-                '  <div class="head">',
-                '    <h2>{{{title}}}</h2>',
-                '    <ul class="original-attr">',
-                '      <li><b>creator:</b> {{{creator}}}</li>',
-                '      <li><b>created:</b> {{created}}</li>',
-                '{{#meta}}      <li><b>{{key}}:</b> {{{value}}}</li>',
-                '{{/meta}}    </ul>',
-                '  </div>',
-                '  <div class="body">',
-                '    {{{body}}}  </div>',
-                '</div>',
-                '{{/original}}{{#updates}}',
-                '<div class="updates">',
-                '  <hr class="update-divider">',
-                '  <div class="update">',
-                '  <ul class="update-attr">',
-                '    <li><b>type:</b> {{type}}</li>',
-                '    <li><b>modified:</b> {{modified}}</li>',
-                '    <li><b>modifier:</b> {{{modifier}}}</li>',
-                '{{#meta}}    <li><b>{{key}}:</b> {{{value}}}</li>{{/meta}}  </ul>',
-                '  <div class="update-body">',
-                '    {{{body}}}  </div>',
-                '  </div>',
-                '{{/updates}}</div>',
-                '</div>',
-                '{{/.}}'
-            ].join('\n');
+            var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8');
 
             // TODO: read templates from files, not strings
             return renderMustache(template, issue);
@@ -566,35 +504,7 @@
         function json2md(issueJSObject, templateOverride) {
             if (issueJSObject) {
 
-                // use triple `{`s for title/value/body to retain special characters
-                // why do I need two newlines inserted before the `---` when there is one already trailing the `body`?
-                var template = templateOverride ? templateOverride : [
-                    '{{#.}}{{#original}}',
-                    '## {{{title}}}',
-                    '+ created: {{created}}',
-                    '+ creator: {{{creator}}}',
-                    '{{#meta}}',
-                    '+ {{key}}: {{{value}}}',
-                    '{{/meta}}',
-                    '',
-                    '{{{body}}}',
-                    '{{/original}}{{#updates}}',
-                    '',
-                    '---',
-                    '+ type: {{type}}',
-                    '+ modified: {{modified}}',
-                    '+ modifier: {{{modifier}}}',
-                    '{{#meta}}',
-                    '+ {{key}}: {{{value}}}',
-                    '{{/meta}}',
-                    '{{#body}}',
-                    '',
-                    '{{{.}}}',
-                    '{{/body}}',
-                    '{{/updates}}',
-                    '',
-                    '{{/.}}'
-                ].join('\n');
+                var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
 
                 // TODO: figure out better way to handle trailing newlines after last issue
                 return renderMustache(template, issueJSObject).trim();

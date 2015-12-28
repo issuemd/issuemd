@@ -1,0 +1,29 @@
+{{#.}}
+<div class="issue">{{#original}}
+<div class="original">
+  <div class="head">
+    <h2>{{{title}}}</h2>
+    <ul class="original-attr">
+      <li><b>creator:</b> {{{creator}}}</li>
+      <li><b>created:</b> {{created}}</li>
+{{#meta}}      <li><b>{{key}}:</b> {{{value}}}</li>
+{{/meta}}    </ul>
+  </div>
+  <div class="body">
+    {{{body}}}  </div>
+</div>
+{{/original}}{{#updates}}
+<div class="updates">
+  <hr class="update-divider">
+  <div class="update">
+  <ul class="update-attr">
+    <li><b>type:</b> {{type}}</li>
+    <li><b>modified:</b> {{modified}}</li>
+    <li><b>modifier:</b> {{{modifier}}}</li>
+{{#meta}}    <li><b>{{key}}:</b> {{{value}}}</li>{{/meta}}  </ul>
+  <div class="update-body">
+    {{{body}}}  </div>
+  </div>
+{{/updates}}</div>
+</div>
+{{/.}}
