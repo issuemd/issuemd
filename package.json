@@ -9,8 +9,8 @@
     "lint": "jshint src test",
     "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
     "test:dist": "ENVIRONMENT=dist npm test",
-    "build": "npm run build:parser && browserify -t brfs -t browserify-versionify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
-    "build:parser": "pegjs < src/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
+    "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
+    "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
     "bump": "npm run bump:patch",
     "bump:major": "npm --no-git-tag-version version major",
     "bump:minor": "npm --no-git-tag-version version minor",
@@ -39,11 +39,17 @@
     "url": "https://github.com/issuemd/issuemd/issues"
   },
   "homepage": "https://github.com/issuemd/issuemd",
+  "aliasify": {
+    "aliases": {
+      "./parser/issuemd-parser-builder.js": "./issuemd-parser.min.js"
+    }
+  },
   "dependencies": {
     "marked": "^0.3.2",
     "mustache": "^2.2.0"
   },
   "devDependencies": {
+    "aliasify": "^1.8.0",
     "blueimp-md5": "^1.1.1",
     "brfs": "^1.4.1",
     "browserify": "^12.0.1",

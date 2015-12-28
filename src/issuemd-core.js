@@ -4,7 +4,7 @@
 ! function () {
 
     var formatter = getFormatter();
-    var parser = require('../issuemd-parser.min.js');
+    var parser = require('./parser/issuemd-parser-builder.js');
 
     var root = this;
 
