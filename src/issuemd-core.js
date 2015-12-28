@@ -83,6 +83,7 @@
 
         // http://stackoverflow.com/a/14378462/665261
         function factoryBuilder(constructor) {
+            // TODO: Object.create needs shim for IE8 - do we care?
             var instance = Object.create(constructor.prototype);
             var result = constructor.apply(instance, Array.prototype.slice.call(arguments, 1));
             return (result !== null && typeof result === 'object') ? result : instance;
@@ -108,12 +109,14 @@
         }
 
         if (utils.typeof(input) === 'object') {
+
             var build = {
                 original: {
                     meta: []
                 },
                 updates: []
             };
+
             utils.each(input, function (value, key) {
                 if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
                     build.original[key] = value;
@@ -124,6 +127,7 @@
                     });
                 }
             });
+
             if (utils.typeof(arg2) === 'array' || (utils.typeof(arg2) === 'object' && (arg2 = [].slice.call(arguments, 1)))) {
                 var updates = [];
                 utils.each(arg2, function (update) {
@@ -144,11 +148,14 @@
                 });
                 build.updates = updates;
             }
+
             input = build;
+
         }
 
         // assume input is issue like, and try to return it as a collection
         var arr = issueArrayFromAnything(input);
+        
         for (var i = 0; i < arr.length; i++) {
             localmerge(this, arr[i]);
         }
