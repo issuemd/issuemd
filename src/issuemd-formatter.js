@@ -189,7 +189,7 @@ module.exports = function (issuemd) {
         cols = colsIn || cols;
 
         var data = [];
-        issuemd(issueJSObject).each(function (issue) {
+        utils.each(issuemd(issueJSObject), function (issue) {
             var attr = issuemd(issue).attr();
             data.push({
                 title: attr.title,
@@ -279,7 +279,7 @@ module.exports = function (issuemd) {
         if (issueJSObject) {
             var out = [],
                 issues = issuemd(issueJSObject);
-            issues.each(function (issueJson) {
+            utils.each(issues, function (issueJson) {
 
                 var issue = issuemd(issueJson),
                     data = {

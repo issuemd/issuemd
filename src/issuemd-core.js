@@ -6,14 +6,12 @@
     var formatter = issuemd.formatter = require('./issuemd-formatter.js')(issuemd);
     var parser = issuemd.parser = require('../issuemd-parser.min.js');
     var merger = issuemd.merger = require('./issuemd-merger.js');
-    var utils = issuemd.utils = require('./utils.js');
+    // var utils = issuemd.utils = require('./utils.js');
 
     var root = this;
 
-    issuemd.version = '0.1.0';
+    issuemd.version = '0.0.0';
 
-    // API Methods
-    // extendable by adding to `issuemd.fn` akin to jQuery plugins
     issuemd.fn = Issuemd.prototype = {
 
         // don't use default object constructor so we can identify collections later on
@@ -25,38 +23,421 @@
             return [].slice.call(this);
         },
         push: [].push,
+        concat: function (arr) {
+            return createCollection(this.toArray().concat(arr.toArray()));
+        },
         sort: [].sort,
         splice: [].splice,
         pop: [].pop,
 
         // expose useful functions publicly
-        toJSON: passThis(toJSON),
-        toString: passThis(toString),
-        md: passThis(md),
-        html: passThis(html),
-        summary: passThis(summary),
-        clone: passThis(clone),
-        eq: passThis(eq),
-        each: passThis(each),
-        remove: passThis(remove),
-        update: passThis(update),
-        merge: passThis(localmerge),
-        attr: passThis(attr),
-        signature: passThis(signature),
-        hash: passThis(hash),
-        meta: passThis(meta),
-        comments: passThis(comments),
-        filter: passThis(filter),
-
-        /* * * * * *
-         * Mixins  *
-         * * * * * */
-
+        add: issuemdAddIssueToCollection,
+        toString: issuemdToString,
+        attr: issuemdAttr,
+        each: issuemdEach,
+        comments: issuemdComments,
+        merge: issuemdMerge,
+        md: issuemdMd,
+        hash: issuemdHash,
+        eq: issuemdEq,
+        filter: issuemdFilter,
+        summary: issuemdSummary,
+        update: issuemdUpdate,
         sortUpdates: require('./plugins/issuemd.sort-updates.js')
+
+        // TODO: re-implement these currently unused methods
+
+        // toJSON: passThis(toJSON),
+        // html: passThis(html),
+        // clone: passThis(clone),
+        // remove: passThis(remove),
+        // signature: passThis(signature),
 
     };
 
-    // hook module into AMD/require etc...
+    /***************
+     * main objects *
+     ***************/
+
+    function issuemd(arr) {
+
+        // if collection passed in, just return it without further ado
+        if (arr instanceof issuemd.fn.constructor) {
+            return arr;
+        }
+
+        // we don't care if you supply array of arguments, or multiple arguments
+        // just coerce into array...
+        if (type(arr) !== 'array') {
+            arr = [].slice.call(arguments, null);
+        }
+
+        var issues = [];
+
+        for (var i = 0, len = (arr || []).length; i < len; i++) {
+            if (type(arr[i]) === 'string') {
+                var parsed = parser.parse(arr[i]);
+                each(parsed, parsedHandler);
+            } else if (arr[i].original) {
+                issues.push(createIssue(arr[i]));
+            } else {
+                issues.push(createIssue(looseJsonToIssueJson(arr[i])));
+            }
+
+        }
+
+        return createCollection(issues);
+
+        function parsedHandler(issue) {
+            // TODO: parser to output in this order...
+            var ordered = {
+                original: {
+                    title: issue.original.title || '',
+                    creator: issue.original.creator || '',
+                    created: issue.original.created || '',
+                    meta: issue.original.meta || [],
+                    body: issue.original.body || ''
+                },
+                updates: issue.updates || []
+            };
+            issues.push(createIssue(ordered));
+        }
+
+    }
+
+    function Issuemd() {}
+
+    function Issue() {}
+
+    /************
+     * factories *
+     ************/
+
+    function createIssue(issueJson) {
+
+        var instance = extend(new Issue(), issueJson);
+
+        return instance;
+
+    }
+
+    function createCollection(issues) {
+
+        var instance = new Issuemd();
+
+        for (var i = 0, len = issues.length; i < len; i++) {
+            instance.push(issues[i]);
+        }
+
+        return instance;
+
+    }
+
+    /******************
+     * issuemd methods *
+     ******************/
+
+    function issuemdToString(cols, templateOverride) {
+        return formatter.string(this.toArray(), cols, templateOverride);
+    }
+
+    // accepts `input` object including modifier, modified
+    function issuemdUpdate(input /*...*/ ) {
+
+        if (type(input) !== 'array') {
+            input = [].slice.call(arguments);
+        }
+        var updates = [];
+        each(input, function (update) {
+            var build = {
+                meta: []
+            };
+            each(update, function (value, key) {
+                if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
+                    build[key] = value;
+                } else {
+                    build.meta.push({
+                        key: key,
+                        value: value
+                    });
+                }
+            });
+            build.modified = build.modified || now();
+            updates.push(build);
+        });
+
+        each(this, function (issue) {
+            issue.updates = issue.updates || [];
+            // must retain original reference to array, not copy, hence...
+            [].push.apply(issue.updates, updates);
+        });
+
+        return this;
+    }
+
+    // return string summary table of collection
+    function issuemdSummary(cols, templateOverride) {
+        return formatter.summary(this.toArray(), cols, templateOverride);
+    }
+
+    function issuemdHash( /*all*/ ) {
+        var all = arguments[arguments.length - 1];
+        var arr = [];
+        var howMany = typeof all === 'boolean' && all ? this.length : 1;
+        var length = typeof arguments[1] === 'number' ? arguments[1] : undefined;
+        for (var i = 0; i < howMany; i++) {
+            arr.push(hash(signature(this.eq(i)), length));
+        }
+        return typeof all === 'boolean' && all ? arr : arr[0];
+    }
+
+    function issuemdMerge(input) {
+
+        var hashes = this.hash(true);
+
+        var that = this;
+
+        each(input, function (issue) {
+            var idx;
+            var merged = false;
+            var issueHash = hash(composeSignature(issue.original.creator, issue.original.created));
+            if ((idx = hashes.indexOf(issueHash)) !== -1) {
+                merger(that[idx], issue);
+                merged = true;
+            }
+            if (!merged) {
+                that.push(issue);
+            }
+        });
+
+        return that;
+
+    }
+
+    function issuemdEq(index) {
+        var newCollection = issuemd();
+        newCollection.push(this[index]);
+        return newCollection;
+    }
+
+    // TODO: rationalise function signature
+    function issuemdMd(input, templateOverride) {
+        if (typeof input === 'string') {
+            return this.merge(input);
+        } else {
+            return formatter.md(this.toArray(), templateOverride);
+        }
+    }
+
+    // loops over each issue - like underscore's each
+    function issuemdEach(func) {
+        each(this, function (item) {
+            func(issuemd([item]));
+        });
+        return this;
+    }
+
+    function issuemdAttr(attrs) {
+        if (!attrs) {
+            return issueJsonToLoose(this.toArray()[0]);
+        } else if (type(attrs) === 'string') {
+            return this.attr()[attrs];
+        } else {
+            each(this, function (issue) {
+                var issueJsonIn = looseJsonToIssueJson(attrs, true);
+                issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta); // TODO: unique
+                issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates); // TODO: unique
+                issue.original = extend(issue.original, issueJsonIn.original);
+            });
+            return this;
+        }
+    }
+
+    function issuemdAddIssueToCollection(issueJson) {
+        this.push(createIssue(issueJson));
+    }
+
+    function issuemdComments() {
+        if (this[0]) {
+            var out = [];
+            each(this[0].updates, function (update) {
+                if (type(update.body) === 'string' && update.body.length) {
+                    out.push(copy(update));
+                }
+            });
+            return out;
+        }
+    }
+
+    function issuemdFilter(first, second) {
+        return second ? filterByAttr(this, first, second) : filterByFunction(this, first);
+    }
+
+    /*************************
+     * issuemd specific utils *
+     *************************/
+
+    function filterByFunction(collection, filterFunction) {
+        var out = issuemd();
+        collection.each(function (item, index) {
+            if (filterFunction(item, index)) {
+                out.merge(item);
+            }
+        });
+        return out;
+    }
+
+    function filterByAttr(collection, key, valueIn) {
+        var values = type(valueIn) === 'array' ? valueIn : [valueIn];
+        return filterByFunction(collection, function (issue) {
+            var attrValue = issue.attr(key),
+                match = false;
+            each(values, function (value) {
+                if (!match && (type(value) === 'regexp' && value.test(attrValue)) || attrValue === value) {
+                    match = true;
+                    return match;
+                }
+            });
+            return match;
+        });
+    }
+
+    function signature(collection) {
+        return composeSignature(collection.attr('creator'), collection.attr('created'));
+    }
+
+    // helper function ensures consistant signature creation
+    function composeSignature(creator, created) {
+        return trim(creator) + ' @ ' + trim(created);
+    }
+
+    function issueJsonToLoose(issue) {
+        var out = (issue || {}).original || {};
+        each(out.meta, function (meta) {
+            out[meta.key] = meta.value;
+        });
+        delete out.meta;
+        // delete out.body;
+        return out;
+    }
+
+    // accept original main properties mixed with arbitrary meta, and return issueJson structure
+    // coerces all values to strings, adds default created/modified timestamps
+    function looseJsonToIssueJson(original /*, updates..., sparse*/ ) {
+        var sparse = type(arguments[arguments.length - 1]) === 'boolean' && arguments[arguments.length - 1];
+        // var updates = [].slice.apply(arguments, [1].concat(sparse ? [-1] : []));
+        var updates = [].slice(arguments, 1);
+        if (sparse) {
+            updates.pop();
+        }
+        var out = {
+            original: {
+                title: (original.title || '') + '',
+                creator: (original.creator || '') + '',
+                created: (original.created || now()) + '',
+                meta: original.meta || [],
+                body: (original.body || '') + ''
+            },
+            updates: updates || []
+        };
+        each(original, function (value, key) {
+            if (objectKeys(out.original).indexOf(key) === -1) {
+                out.original.meta.push({
+                    key: key,
+                    value: value + ''
+                });
+            }
+        });
+        // TODO: does it make sense to set modified time for all updates if not set?
+        // TODO: take all subsequent arguments as updates, or array of updates which will not be modified
+        each(out.updates, function (update) {
+            update.modified = update.modified || now();
+        });
+        if (sparse) {
+            each(out.original, function (value, key) {
+                if (key !== 'meta' && objectKeys(original).indexOf(key) === -1) {
+                    delete out.original[key];
+                }
+            });
+        }
+        return out;
+    }
+
+    // return firstbits hash of input, optionally specify `size` which defaults to 32
+    function hash(string, size) {
+        return require('blueimp-md5').md5(string).slice(0, size || 32);
+    }
+
+    /****************
+     * general utils *
+     ****************/
+
+    function copy(input) {
+        return JSON.parse(JSON.stringify(input));
+    }
+
+    function type(me) {
+        return Object.prototype.toString.call(me).split(/\W/)[2].toLowerCase();
+    }
+
+    function now() {
+        // TODO: more general date converter method required
+        return (new Date()).toISOString().replace('T', ' ').slice(0, 19);
+    }
+
+    // TODO: Returning non-false is the same as a continue statement in a for loop
+    function each(obj, iteratee, context) {
+        if (obj === null || obj === undefined) {
+            return obj;
+        }
+        if (context !== void 0) {
+            iteratee = function (value, other) {
+                return iteratee.call(context, value, other);
+            };
+        }
+        var i, length = obj.length;
+        if (length === +length) {
+            for (i = 0; i < length; i++) {
+                iteratee(obj[i], i, obj);
+            }
+        } else {
+            // TODO: IE 8 polyfill for Object.keys
+            var keys = Object.keys(obj);
+            for (i = 0, length = keys.length; i < length; i++) {
+                iteratee(obj[keys[i]], keys[i], obj);
+            }
+        }
+        return obj;
+    }
+
+    function objectKeys(obj) {
+        var keys = [];
+
+        for (var i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                keys.push(i);
+            }
+        }
+
+        return keys;
+    }
+
+    function trim(string) {
+        return (string + '').replace(/(^\s+|\s+$)/g, '');
+    }
+
+    function extend(original, options) {
+        for (var prop in options) {
+            if (Object.prototype.hasOwnProperty.call(options, prop)) {
+                original[prop] = options[prop];
+            }
+        }
+        return original;
+    }
+
+    /**************************************
+     * hook module into AMD/require etc... *
+     **************************************/
 
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
@@ -71,427 +452,6 @@
         define('issuemd', [], function () {
             return issuemd;
         });
-    }
-
-    /* * * * * * *
-     * Functions *
-     * * * * * * */
-
-    // main entry point for issuemd api
-    // jquery like chained api inspired by: http://blog.buymeasoda.com/creating-a-jquery-like-chaining-api/
-    function issuemd() {
-
-        // http://stackoverflow.com/a/14378462/665261
-        function factoryBuilder(constructor) {
-            var instance = Object.create(constructor.prototype);
-            var result = constructor.apply(instance, Array.prototype.slice.call(arguments, 1));
-            return (result !== null && typeof result === 'object') ? result : instance;
-        }
-
-        var issuemdFactory = factoryBuilder.bind(null, Issuemd);
-        return issuemdFactory.apply(null, arguments);
-
-    }
-
-    // issuemd constructor function
-    function Issuemd(input, arg2) {
-
-        // if there is no input, return a collection with no issues
-        if (input === null || input === undefined) {
-            makeIssues(this, 0);
-            return this;
-        }
-
-        // if collection passed in, just return it without further ado
-        if (input instanceof issuemd.fn.constructor) {
-            return input;
-        }
-
-        if (utils.typeof(input) === 'object') {
-            var build = {
-                original: {
-                    meta: []
-                },
-                updates: []
-            };
-            utils.each(input, function (value, key) {
-                if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
-                    build.original[key] = value;
-                } else {
-                    build.original.meta.push({
-                        key: key,
-                        value: value
-                    });
-                }
-            });
-            if (utils.typeof(arg2) === 'array' || (utils.typeof(arg2) === 'object' && (arg2 = [].slice.call(arguments, 1)))) {
-                var updates = [];
-                utils.each(arg2, function (update) {
-                    var build = {
-                        meta: []
-                    };
-                    utils.each(update, function (value, key) {
-                        if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
-                            build[key] = value;
-                        } else {
-                            build.meta.push({
-                                key: key,
-                                value: value
-                            });
-                        }
-                    });
-                    updates.push(build);
-                });
-                build.updates = updates;
-            }
-            input = build;
-        }
-
-        // assume input is issue like, and try to return it as a collection
-        var arr = issueArrayFromAnything(input);
-        for (var i = 0; i < arr.length; i++) {
-            localmerge(this, arr[i]);
-        }
-
-        return this;
-
-    }
-
-    // serialize issue data object into issuemd style JSON
-    function toJSON(collection) {
-        var ret = [];
-        for (var i = 0; i < collection.length; i++) {
-            ret.push(collection[i]);
-        }
-        return ret;
-    }
-
-    // when coerced into string, return issue collection as md
-    function toString(collection, cols, templateOverride) {
-        return formatter.string(collection.toArray(), cols, templateOverride);
-    }
-
-    // return string summary table of collection
-    function summary(collection, cols, templateOverride) {
-        return formatter.summary(collection.toArray(), cols, templateOverride);
-    }
-
-    // return MD render of all ussues
-    function md(collection, input, templateOverride) {
-        if (typeof input === 'string') {
-            return collection.merge(input);
-            // merger(collection[0], issueArrayFromAnything(input)[0]);
-        } else {
-            return formatter.md(collection.toArray(), templateOverride);
-        }
-    }
-
-    // return HTML render of all issues
-    function html(collection, templateOverride) {
-        return formatter.html(collection.toArray(), templateOverride);
-    }
-
-    // return a deep copy of a collection - breaking references
-    function clone(collection) {
-        return issuemd(utils.copy(collection.toArray()));
-    }
-
-    // return new collection with *reference* to issue at `index` of original collection
-    function eq(collection, index) {
-        var newCollection = issuemd({});
-        newCollection[0] = collection[index];
-        return newCollection;
-    }
-
-    function makeIssues(collection, input) {
-        for (var i = input; i--;) {
-            collection.push(utils.makeIssue());
-        }
-        return collection;
-    }
-
-    // loops over each issue - like underscore's each
-    function each(collection, func) {
-        utils.each(collection, function (item) {
-            func(issuemd([item]));
-        });
-        return collection;
-    }
-
-    // remove the issues specified by `input` (accepts array, or one or more arguments specified indices to be deleted)
-    function remove(collection, input) {
-
-        // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
-        var indices = utils.typeof(input) === 'array' ? input : [].slice.call(arguments);
-
-        // sort and reverse indices so that elements are removed from back, and don't change position of next one to remove
-        indices.sort().reverse();
-
-        utils.each(indices, function (index) {
-            collection.splice(index, 1);
-        });
-
-    }
-
-    // accepts `input` object including modifier, modified
-    function update(collection, input /*...*/ ) {
-
-        if (utils.typeof(input) !== 'array') {
-            input = [].slice.call(arguments, 1);
-        }
-        var updates = [];
-        utils.each(input, function (update) {
-            var build = {
-                meta: []
-            };
-            utils.each(update, function (value, key) {
-                if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
-                    build[key] = value;
-                } else {
-                    build.meta.push({
-                        key: key,
-                        value: value
-                    });
-                }
-            });
-            build.modified = build.modified || utils.now();
-            updates.push(build);
-        });
-
-        utils.each(collection, function (issue) {
-            issue.updates = issue.updates || [];
-            // must retain original reference to array, not copy, hence...
-            [].push.apply(issue.updates, updates);
-        });
-
-        return collection;
-    }
-
-    // creates or overwrites existing meta item with new key/value
-    function updateMeta(collection, obj) {
-
-        utils.each(collection, function (issue) {
-            var hit;
-
-            function hitness(meta) {
-                if (meta.key === key) {
-                    meta.value = value;
-                    hit = true;
-                }
-            }
-            for (var key in obj) {
-                var value = obj[key];
-                hit = false;
-                if (key === 'title' || key === 'created' || key === 'creator' || key === 'body') {
-                    issue.original[key] = value;
-                } else {
-                    // check all original meta values
-                    utils.each(issue.original.meta, hitness);
-                    if (!hit) {
-                        issue.original.meta.push({
-                            key: key,
-                            value: value
-                        });
-                    }
-                }
-            }
-        });
-    }
-
-    // without args or with boolean, returns raw attr hash from first issue or array of hashes from all issues (includes title/created/creator)
-    // with key specified, returns matching value from first issue
-    // with key/value, or key/value hash specified, updates all issues with key/value attrs
-    function attr(collection, key, value) {
-
-        var howMany;
-        var arr = [];
-
-        // if we have a key and value, update issue meta
-        if (typeof key === 'string' && typeof value === 'string') {
-            var obj = {};
-            obj[key] = value;
-            updateMeta(collection, obj);
-            return collection;
-            // if object passed in, update issue meta with object
-        } else if (utils.isObject(key)) {
-            updateMeta(collection, key);
-            return collection;
-            // if a key string is passed in, get related value from first issue
-        } else if (typeof key === 'string') {
-            if (value) {
-                // return array of values for specified key from all issues
-                utils.each(collection.attr(value), function (issue) {
-                    arr.push(issue[key]);
-                });
-                return arr;
-            } else {
-                // return value for specified key from first issue
-                return attr(collection)[key];
-            }
-        } else if ((typeof key === 'undefined' && typeof value === 'undefined') || typeof key === 'boolean') {
-            // returns hash of attrs of first issue or array of hashes for all issues if boolean is true
-            howMany = key ? collection.length : 1;
-            var metaHandler = function (meta) {
-                out[meta.key] = meta.value;
-            };
-            var updateHandler = function (update) {
-                utils.each(update.meta, function (meta) {
-                    out[meta.key] = meta.value;
-                });
-            };
-            for (var i = 0; i < howMany; i++) {
-                var out = {
-                    title: collection[i].original.title,
-                    created: collection[i].original.created,
-                    creator: collection[i].original.creator,
-                    body: collection[i].original.body
-                };
-                utils.each(collection[i].original.meta, metaHandler);
-                utils.each(collection[i].updates, updateHandler);
-                arr.push(out);
-            }
-            return key ? arr : arr[0];
-
-        }
-    }
-
-    function signature(collection) {
-        return composeSignature(collection.attr('creator'), collection.attr('created'));
-    }
-
-    function hash(collection /*, all*/ ) {
-        var all = arguments[arguments.length - 1];
-        var arr = [];
-        var howMany = typeof all === 'boolean' && all ? collection.length : 1;
-        var length = typeof arguments[1] === 'number' ? arguments[1] : undefined;
-        for (var i = 0; i < howMany; i++) {
-            arr.push(utils.hash(signature(collection.eq(i)), length));
-        }
-        return typeof all === 'boolean' && all ? arr : arr[0];
-    }
-
-    // same as `.attr` but only for meta (i.e. without title/created/creator/body)
-    function meta(collection, key, value) {
-        if (utils.isObject(key) || (typeof key === 'string' && typeof value === 'string')) {
-            return attr(collection, key, value);
-        } else if (typeof key === 'string') {
-            return attr(collection, key, value);
-        } else if (arguments.length === 0 || typeof key === 'boolean') {
-            var arr = [];
-            var howMany = key ? collection.length : 1;
-            var metaHandler = function (meta) {
-                out[meta.key] = meta.value;
-            };
-            for (var i = 0; i < howMany; i++) {
-                var out = {};
-                utils.each(collection[i].meta, metaHandler);
-                arr.push(out);
-            }
-            return key ? arr : arr[0];
-        }
-    }
-
-    function comments(collection) {
-        if (collection.length > 1) {
-            utils.debug.warn('`issuemd.fn.comments` is meant to operate on single issue, but got more than one, so will ignore others after first.');
-        }
-        if (collection[0]) {
-            var out = [];
-            utils.each(collection[0].updates, function (update) {
-                if (utils.typeof(update.body) === 'string' && update.body.length) {
-                    out.push(utils.copy(update));
-                }
-            });
-            return out;
-        }
-    }
-
-    function filterByFunction(collection, filterFunction) {
-        var out = issuemd();
-        collection.each(function (item, index) {
-            if (filterFunction(item, index)) {
-                out.merge(item);
-            }
-        });
-        return out;
-    }
-
-    function filterByAttr(collection, key, valueIn) {
-        var values = issuemd.utils.typeof(valueIn) === 'array' ? valueIn : [valueIn];
-        return filterByFunction(collection, function (issue) {
-            var attrValue = issue.attr(key),
-                match = false;
-            issuemd.utils.each(values, function (value) {
-                if (!match && (issuemd.utils.typeof(value) === 'regexp' && value.test(attrValue)) || attrValue === value) {
-                    match = true;
-                    return match;
-                }
-            });
-            return match;
-        });
-    }
-
-    function filter(collection, first, second) {
-        return second ? filterByAttr(collection, first, second) : filterByFunction(collection, first);
-    }
-
-    /* helper functions for Issuemd class */
-
-    // merges one or more issues from issuePOJO or issueMD into issues
-    function localmerge(collection, input) {
-
-        var arr = issueArrayFromAnything(input);
-
-        var hashes = collection.hash(true);
-
-        utils.each(arr, function (issue) {
-            var idx;
-            var merged = false;
-            var issueHash = utils.hash(composeSignature(issue.original.creator, issue.original.created));
-            if ((idx = utils.indexOf(hashes, issueHash)) !== -1) {
-                merger(collection[idx], issue);
-                merged = true;
-            }
-            if (!merged) {
-                collection.push(issue);
-            }
-        });
-
-        return collection;
-
-    }
-
-    // helper function accepts any issue like things, and returns an array of issue data
-    function issueArrayFromAnything(input) {
-        if (input instanceof issuemd.fn.constructor) {
-            return input.toArray();
-        } else if (utils.typeof(input) === 'array') {
-            var arr = [];
-            for (var i = 0; i < input.length; i++) {
-                var item = input[i];
-                if (item instanceof issuemd.fn.constructor) {
-                    item = item.toArray();
-                }
-                arr = arr.concat(issueArrayFromAnything(item));
-            }
-            return arr;
-        } else if (utils.typeof(input) === 'object') {
-            return [utils.makeIssue(input.original, input.updates)];
-        } else if (utils.typeof(input) === 'string') {
-            return parser.parse(input);
-        }
-    }
-
-    // helper function ensures consistant signature creation
-    function composeSignature(creator, created) {
-        return utils.trim(creator) + ' @ ' + utils.trim(created);
-    }
-
-    function passThis(fn) {
-        return function () {
-            [].unshift.call(arguments, this);
-            return fn.apply(this, arguments);
-        };
     }
 
 }();
