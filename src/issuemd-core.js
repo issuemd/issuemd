@@ -10,10 +10,6 @@
 
     issuemd.version = '__VERSION__';
 
-    issuemd.formatter = formatter;
-    issuemd.parser = parser;
-    issuemd.merger = merger;
-
     issuemd.fn = Issuemd.prototype = extend({
 
         // don't use default object constructor so we can identify collections later on
@@ -56,6 +52,7 @@
         var issues = [];
 
         for (var i = 0, len = (arr || []).length; i < len; i++) {
+
             if (type(arr[i]) === 'string') {
                 var parsed = parser.parse(arr[i]);
                 each(parsed, parsedHandler);
@@ -70,18 +67,7 @@
         return createCollection(issues);
 
         function parsedHandler(issue) {
-            // TODO: parser to output in this order...
-            var ordered = {
-                original: {
-                    title: issue.original.title || '',
-                    creator: issue.original.creator || '',
-                    created: issue.original.created || '',
-                    meta: issue.original.meta || [],
-                    body: issue.original.body || ''
-                },
-                updates: issue.updates || []
-            };
-            issues.push(createIssue(ordered));
+            issues.push(createIssue(issue));
         }
 
     }
@@ -611,37 +597,55 @@
     }
 
     function filterByAttr(collection, key, valueIn) {
+
         var values = type(valueIn) === 'array' ? valueIn : [valueIn];
+
         return filterByFunction(collection, function (issue) {
+
             var attrValue = issue.attr(key),
                 match = false;
+
             each(values, function (value) {
+
                 if (!match && (type(value) === 'regexp' && value.test(attrValue)) || attrValue === value) {
                     match = true;
                     return match;
                 }
+
             });
+
             return match;
+
         });
+
     }
 
     function signature(collection) {
+
         return composeSignature(collection.attr('creator'), collection.attr('created'));
+
     }
 
     // helper function ensures consistant signature creation
     function composeSignature(creator, created) {
+
         return trim(creator) + ' @ ' + trim(created);
+
     }
 
+    // TODO: think about how to treat meta vs attr from user's perspective
     function issueJsonToLoose(issue) {
+
         var out = (issue || {}).original || {};
+
         each(out.meta, function (meta) {
             out[meta.key] = meta.value;
         });
+
         delete out.meta;
-        // delete out.body;
+
         return out;
+
     }
 
     // accept original main properties mixed with arbitrary meta, and return issueJson structure
