@@ -17,16 +17,16 @@
 
         // enable collections to behave like an Array
         length: 0,
-        toArray: function () {
-            return [].slice.call(this);
-        },
         push: [].push,
-        concat: function (arr) {
-            return createCollection(this.toArray().concat(arr.toArray()));
-        },
         sort: [].sort,
         splice: [].splice,
         pop: [].pop,
+        toArray: function () {
+            return [].slice.call(this);
+        },
+        concat: function (arr) {
+            return createCollection(this.toArray().concat(arr.toArray()));
+        },
 
         sortUpdates: require('./plugins/issuemd.sort-updates.js')
 
@@ -125,12 +125,17 @@
                 if (type(input) !== 'array') {
                     input = [].slice.call(arguments);
                 }
+
                 var updates = [];
+
                 each(input, function (update) {
+
                     var build = {
                         meta: []
                     };
+
                     each(update, function (value, key) {
+
                         if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
                             build[key] = value;
                         } else {
@@ -139,9 +144,13 @@
                                 value: value
                             });
                         }
+
                     });
+
                     build.modified = build.modified || now();
+
                     updates.push(build);
+
                 });
 
                 each(this, function (issue) {
@@ -159,14 +168,18 @@
             },
 
             hash: function ( /*all*/ ) {
+
                 var all = arguments[arguments.length - 1];
                 var arr = [];
                 var howMany = typeof all === 'boolean' && all ? this.length : 1;
                 var length = typeof arguments[1] === 'number' ? arguments[1] : undefined;
+
                 for (var i = 0; i < howMany; i++) {
                     arr.push(hash(signature(this.eq(i)), length));
                 }
+
                 return typeof all === 'boolean' && all ? arr : arr[0];
+
             },
 
             merge: function (input) {
@@ -176,16 +189,20 @@
                 var that = this;
 
                 each(input, function (issue) {
+
                     var idx;
                     var merged = false;
                     var issueHash = hash(composeSignature(issue.original.creator, issue.original.created));
+
                     if ((idx = hashes.indexOf(issueHash)) !== -1) {
                         merger(that[idx], issue);
                         merged = true;
                     }
+
                     if (!merged) {
                         that.push(issue);
                     }
+
                 });
 
                 return that;
@@ -193,42 +210,60 @@
             },
 
             eq: function (index) {
+
                 var newCollection = issuemd();
                 newCollection.push(this[index]);
                 return newCollection;
+
             },
 
             // TODO: rationalise function signature
             md: function (input, templateOverride) {
+
                 if (typeof input === 'string') {
                     return this.merge(input);
                 } else {
                     return formatter.md(this.toArray(), templateOverride);
                 }
+
             },
 
             // loops over each issue - like underscore's each
             each: function (func) {
+
                 each(this, function (item) {
                     func(issuemd([item]));
                 });
+
                 return this;
+
             },
 
             attr: function (attrs) {
+
                 if (!attrs) {
+
                     return issueJsonToLoose(this.toArray()[0]);
+
                 } else if (type(attrs) === 'string') {
+
                     return this.attr()[attrs];
+
                 } else {
+
                     each(this, function (issue) {
+
                         var issueJsonIn = looseJsonToIssueJson(attrs, true);
                         issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta); // TODO: unique
                         issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates); // TODO: unique
                         issue.original = extend(issue.original, issueJsonIn.original);
+
                     });
+
                     return this;
+
                 }
+
             },
 
             add: function (issueJson) {
@@ -236,15 +271,23 @@
             },
 
             comments: function () {
+
                 if (this[0]) {
+
                     var out = [];
+
                     each(this[0].updates, function (update) {
+
                         if (type(update.body) === 'string' && update.body.length) {
                             out.push(copy(update));
                         }
+
                     });
+
                     return out;
+
                 }
+
             },
 
             filter: function (first, second) {
@@ -272,60 +315,79 @@
         // TODO: better handling of the widest element
         var widest = 0;
         var cols = 80;
+
         var curtailed = function () {
+
             return function (str, render) {
                 var content = render(str);
                 return curtail(content + repeat(' ', (cols || 80) - 4 - content.length), (cols || 80) - 4);
             };
+
         };
 
         var body = function () {
+
             return function (str, render) {
                 var content = render(str);
                 return content + repeat(' ', (cols || 80) - 4 - content.length);
             };
+
         };
 
         var padleft = function () {
+
             return function (str, render) {
                 return repeat(render(str), widest);
             };
+
         };
 
         var padright = function () {
+
             return function (str, render) {
                 return repeat(render(str), (cols || 80) - widest - 7);
             };
+
         };
 
         var pad12 = function () {
+
             return function (str, render) {
                 return (render(str) + '            ').substr(0, 12);
             };
+
         };
 
         var key = function () {
+
             return function (str, render) {
                 var content = render(str);
                 return content + repeat(' ', widest - content.length);
             };
+
         };
         var value = function () {
+
             return function (str, render) {
                 return render(str) + repeat(' ', (cols || 80) - 7 - widest - render(str).length);
             };
+
         };
 
         function pad() {
+
             return function (str, render) {
                 return repeat(render(str), (cols || 80) - 4);
             };
+
         }
 
         function pad6() {
+
             return function (str, render) {
                 return (render(str) + '      ').substr(0, 6);
             };
+
         }
 
         return {
@@ -344,8 +406,11 @@
             cols = colsIn || cols;
 
             var data = [];
+
             each(issuemd(issueJSObject), function (issue) {
+
                 var attr = issuemd(issue).attr();
+
                 data.push({
                     title: attr.title,
                     creator: attr.creator,
@@ -353,6 +418,7 @@
                     assignee: attr.assignee,
                     status: attr.status
                 });
+
             });
 
             var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8');
@@ -379,23 +445,32 @@
             cols = colsIn || cols;
 
             var splitLines = function (input) {
+
                 var output = [];
+
                 var lines = wordwrap(input, ((cols || 80) - 4)).replace(/\n\n+/, '\n\n').split('\n');
+
                 each(lines, function (item) {
+
                     if (item.length < ((cols || 80) - 4)) {
                         output.push(item);
                     } else {
                         output = output.concat(item.match(new RegExp('.{1,' + ((cols || 80) - 4) + '}', 'g')));
                     }
+
                 });
+
                 return output;
+
             };
 
             var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-string.mustache', 'utf8');
 
             if (issueJSObject) {
+
                 var out = [],
                     issues = issuemd(issueJSObject);
+
                 each(issues, function (issueJson) {
 
                     var issue = issuemd(issueJson),
@@ -408,26 +483,36 @@
                     widest = 'signature'.length;
                     each(issue.attr(), function (value, key) {
                         if (key === 'title' || key === 'body') {
+
                             data[key] = splitLines(value);
+
                         } else if (key === 'created' || key === 'creator') {
+
                             data[key] = value;
+
                             if (key.length > widest) {
                                 widest = key.length;
                             }
+
                         } else {
+
                             data.meta.push({
                                 key: key,
                                 value: value
                             });
+
                             if (key.length > widest) {
                                 widest = key.length;
                             }
                         }
+
                     });
 
                     each(issue.comments(), function (value) {
+
                         value.body = splitLines(value.body);
                         data.comments.push(value);
+
                     });
 
                     out.push(renderMustache(template, {
@@ -466,17 +551,21 @@
             var issue = copy(issueJSObject);
 
             for (var j = issue.length; j--;) {
+
                 if (issue[j].original.body) {
                     issue[j].original.body = marked(issue[j].original.body);
                 } else {
                     issue[j].original.body = '';
                 }
+
                 for (i = issue[j].updates.length; i--;) {
+
                     if (issue[j].updates[i].body) {
                         issue[j].updates[i].body = marked(issue[j].updates[i].body);
                     } else {
                         issue[j].updates[i].body = '';
                     }
+
                 }
             }
 
@@ -488,21 +577,28 @@
         }
 
         function json2md(issueJSObject, templateOverride) {
+
             if (issueJSObject) {
 
                 var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
 
                 // TODO: figure out better way to handle trailing newlines after last issue
                 return renderMustache(template, issueJSObject).trim();
+
             }
+
         }
 
         function repeat(char, qty) {
+
             var out = '';
+
             for (var i = 0; i < qty; i++) {
                 out += char;
             }
+
             return out;
+
         }
 
         function curtail(input, width) {
@@ -562,6 +658,7 @@
         }) : left.updates;
 
         var merged = [];
+
         // remove duplicate entries
         for (var i = 0; i < sorted.length; i++) {
             if (JSON.stringify(sorted[i]) !== JSON.stringify(sorted[i - 1])) {
@@ -572,6 +669,7 @@
         // check inequality in issue head
         left.updates = null;
         right.updates = null;
+
         if (!objectsEqual(left, right)) {
             // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
             console.log('issues are not identical - head must not be modified, only updates added');
@@ -587,13 +685,19 @@
     }
 
     function filterByFunction(collection, filterFunction) {
+
         var out = issuemd();
+
         collection.each(function (item, index) {
+
             if (filterFunction(item, index)) {
                 out.merge(item);
             }
+
         });
+
         return out;
+
     }
 
     function filterByAttr(collection, key, valueIn) {
@@ -621,16 +725,12 @@
     }
 
     function signature(collection) {
-
         return composeSignature(collection.attr('creator'), collection.attr('created'));
-
     }
 
     // helper function ensures consistant signature creation
     function composeSignature(creator, created) {
-
         return trim(creator) + ' @ ' + trim(created);
-
     }
 
     // TODO: think about how to treat meta vs attr from user's perspective
@@ -651,12 +751,15 @@
     // accept original main properties mixed with arbitrary meta, and return issueJson structure
     // coerces all values to strings, adds default created/modified timestamps
     function looseJsonToIssueJson(original /*, updates..., sparse*/ ) {
+
         var sparse = type(arguments[arguments.length - 1]) === 'boolean' && arguments[arguments.length - 1];
-        // var updates = [].slice.apply(arguments, [1].concat(sparse ? [-1] : []));
+
         var updates = [].slice(arguments, 1);
+
         if (sparse) {
             updates.pop();
         }
+
         var out = {
             original: {
                 title: (original.title || '') + '',
@@ -667,27 +770,40 @@
             },
             updates: updates || []
         };
+
         each(original, function (value, key) {
+
             if (objectKeys(out.original).indexOf(key) === -1) {
+
                 out.original.meta.push({
                     key: key,
                     value: value + ''
                 });
+
             }
+
         });
+
         // TODO: does it make sense to set modified time for all updates if not set?
         // TODO: take all subsequent arguments as updates, or array of updates which will not be modified
         each(out.updates, function (update) {
             update.modified = update.modified || now();
         });
+
         if (sparse) {
+
             each(out.original, function (value, key) {
+
                 if (key !== 'meta' && objectKeys(original).indexOf(key) === -1) {
                     delete out.original[key];
                 }
+
             });
+
         }
+
         return out;
+
     }
 
     // return firstbits hash of input, optionally specify `size` which defaults to 32
@@ -708,37 +824,51 @@
         return Object.prototype.toString.call(me).split(/\W/)[2].toLowerCase();
     }
 
+    // TODO: more general date converter method required
     function now() {
-        // TODO: more general date converter method required
         return (new Date()).toISOString().replace('T', ' ').slice(0, 19);
     }
 
     // TODO: Returning non-false is the same as a continue statement in a for loop
     function each(obj, iteratee, context) {
+
         if (obj === null || obj === undefined) {
             return obj;
         }
+
         if (context !== void 0) {
+
             iteratee = function (value, other) {
                 return iteratee.call(context, value, other);
             };
+
         }
+
         var i, length = obj.length;
+
         if (length === +length) {
+
             for (i = 0; i < length; i++) {
                 iteratee(obj[i], i, obj);
             }
+
         } else {
+
             // TODO: IE 8 polyfill for Object.keys
             var keys = Object.keys(obj);
+
             for (i = 0, length = keys.length; i < length; i++) {
                 iteratee(obj[keys[i]], keys[i], obj);
             }
+
         }
+
         return obj;
+
     }
 
     function objectKeys(obj) {
+
         var keys = [];
 
         for (var i in obj) {
@@ -751,16 +881,23 @@
     }
 
     function trim(string) {
+
         return (string + '').replace(/(^\s+|\s+$)/g, '');
+
     }
 
     function extend(original, options) {
+
         for (var prop in options) {
+
             if (Object.prototype.hasOwnProperty.call(options, prop)) {
                 original[prop] = options[prop];
             }
+
         }
+
         return original;
+
     }
 
     // initially from: http://phpjs.org/functions/wordwrap/
@@ -780,9 +917,11 @@
         }
 
         for (i = -1, lineCount = (result = str.split(/\r\n|\n|\r/)).length; ++i < lineCount; result[i] += line) {
+
             for (line = result[i], result[i] = ''; line.length > intWidth; result[i] += line.slice(0, j) + ((line = line.slice(j)).length && (line = line.replace(/^\s\b/, '') || true) ? strBreak : '')) {
                 j = cut === 2 || (j = line.slice(0, intWidth + 1).match(/\S*(\s)?$/))[1] ? intWidth : j.input.length - j[0].length || cut === 1 && intWidth || j.input.length + (j = line.slice(intWidth).match(/^\S*/))[0].length;
             }
+
         }
 
         return result.join('\n');
@@ -793,18 +932,25 @@
      ***************************************/
 
     if (typeof exports !== 'undefined') {
+
         if (typeof module !== 'undefined' && module.exports) {
             module.exports = issuemd;
         }
+
         exports.issuemd = issuemd;
+
     } else {
+
         root.issuemd = issuemd;
+
     }
 
     if (typeof define === 'function' && define.amd) {
+
         define('issuemd', [], function () {
             return issuemd;
         });
+
     }
 
 }();
