@@ -27,8 +27,8 @@ module.exports = function () {
         simpleIssueJson: JSON.stringify({
             original: {
                 title: 'The issue title',
-                creator: 'Some Guy',
                 created: '2012-03-04 10:22:03',
+                creator: 'Some Guy',
                 meta: [],
                 body: 'Just a simple issue'
             },
@@ -47,8 +47,8 @@ module.exports = function () {
         simpleIssueWithMetaJson: JSON.stringify({
             original: {
                 title: 'The issue title',
-                creator: 'Some Guy',
                 created: '2012-03-04 10:22:03',
+                creator: 'Some Guy',
                 meta: [{
                     key: 'labels',
                     value: 'important, easy'
@@ -90,20 +90,20 @@ module.exports = function () {
         issueWithCommentsJson: JSON.stringify({
             original: {
                 title: 'The issue title',
-                creator: 'Some Guy',
                 created: '2012-03-04 10:22:03',
+                creator: 'Some Guy',
                 meta: [],
                 body: 'Just a simple issue'
             },
             updates: [{
-                meta: [],
                 modified: '2012-03-04 10:25:00',
                 modifier: 'Some Guy',
+                meta: [],
                 body: 'Just a little comment'
             }, {
-                meta: [],
                 modified: '2012-03-04 10:26:00',
                 modifier: 'Some Other Guy',
+                meta: [],
                 body: 'Some Other Guy says...'
             }]
         })

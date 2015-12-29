@@ -16,19 +16,17 @@ ISSUE_META = created:META_CREATED creator:META_CREATOR meta:META_ITEM* {
   return {
     // reserve space for title, to retain order of attributes (mostly for testing purposes)
     title: null,
-    // TODO: why do tests expect this order, but parser does not necessarily!!?
-    creator: creator,
     created: created,
+    creator: creator,
     meta: meta
   }
 }
 
 UPDATE_META = modified:META_MODIFIED modifier:META_MODIFIER meta:META_ITEM* {
   return {
-    // TODO: improve ordering of elements
-    meta: meta,
     modified: modified,
-    modifier: modifier
+    modifier: modifier,
+    meta: meta
   }
 }
 
