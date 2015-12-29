@@ -1,110 +1,70 @@
-// declare variables used to store parts as they are built up
-// TODO: figure out how to avoid using variables
-{ var update, issue; }
+COLLECTION = issues:ISSUE* { return issues }
 
-// main object to return
-// 1. issue list is 1 or more issues
-issues = issues:issue+ { return issues }
-
-// issue variable should be parsed by now, so return it
-// 1. one issue issue title
-// 2. one or more header meta information
-// 3. issue body
-// 4. issue updates
-issue = title issue_meta+ issue_body update* nl* { return issue }
-
-// reset the issue object and attach title to it
-// 1. exact two '#' characters
-// 2. one or more white spaces
-// 3. at least one any character until the end of the line
-title = '##' whitespace+ title:all_chars {
-  issue = issue = {
-    original: {
-        title: '',
-        creator: '',
-        created: '',
-        meta: [],
-        body: ''
-    },
-    updates: []
-  };
-
-  issue.original.title = title
+ISSUE = title:TITLE original:ISSUE_META body:BODY? updates:UPDATE* NEWLINE* {
+  original.title = title
+  original.body = body || ''
+  return { original: original, updates: updates }
 }
 
-// attach meta to issue object
-issue_meta = meta:meta {
-  if(meta.key.match(/^creat(or|ed)$/)){
-    issue.original[meta.key] = meta.value;
-  } else {
-    issue.original.meta.push(meta);
+/* TITLE */
+
+TITLE = '##' SPACE+ title:TO_EOL* { return title.join('') }
+
+/* META - used in ISSUE and UPDATE */
+
+ISSUE_META = created:META_CREATED creator:META_CREATOR meta:META_ITEM* {
+  return {
+    // reserve space for title, to retain order of attributes (mostly for testing purposes)
+    title: null,
+    // TODO: why do tests expect this order, but parser does not necessarily!!?
+    creator: creator,
+    created: created,
+    meta: meta
   }
 }
 
-// attach body to issue object, and reset update variable
-issue_body = body:body {
-  issue.original.body = body.join('');
-  update = { meta: [] };
-}
-
-// update finished, attach to issue object and reset update variable
-// 1. update start
-// 2. zero or more update meta data
-// 3. update body
-update = update_delimiter update_meta* update_body {
-  issue.updates.push(update);
-  update = { meta: [] };
-}
-
-// attach meta to update
-update_meta = meta:meta {
-  if(meta.key.match(/^modifie[rd]|type$/)){
-    update[meta.key] = meta.value;
-  } else {
-    update.meta.push(meta);
+UPDATE_META = modified:META_MODIFIED modifier:META_MODIFIER meta:META_ITEM* {
+  return {
+    // TODO: improve ordering of elements
+    meta: meta,
+    modified: modified,
+    modifier: modifier
   }
 }
 
-// attach update body to update
-// TODO: find alternative to `trim` in parser logic (appears to be required for last update only)
-update_body = body:anything* { update.body = body.join('').trim() }
+META_CREATED = META_START 'created' META_SEPARATOR value:META_VALUE { return value }
+META_CREATOR = META_START 'creator' META_SEPARATOR value:META_VALUE { return value }
+META_MODIFIED = META_START 'modified' META_SEPARATOR value:META_VALUE { return value }
+META_MODIFIER = META_START 'modifier' META_SEPARATOR value:META_VALUE { return value }
+META_ITEM = META_START label:META_LABEL META_SEPARATOR value:META_VALUE { return { key: label, value: value } }
+META_START = NEWLINE '+' SPACE+
+META_LABEL = ALPHAS
+META_SEPARATOR = ':' WHITESPACE
+META_VALUE = value:TO_EOL* { return value.join('') }
 
-// 1. exact 3 '-' characters
-update_delimiter = nl nl '---'
+/* BODY - used in ISSUE and UPDATE */
 
-//
-// re-usable chunks
-//
+BODY = DIVIDER body:TO_DELIMITER { return body }
 
-// used by issue and update
-// 1. 0 or more characters until the next update or new issue
-body = nl nl body:anything+ { return body }
-//1. 0 or more white spaces
-//2. exact one single '+'
-//3. at least one space after '+'
-//4. meta keyword
-//5. exact one single ':'
-//6. 0 or more single spaces
-//7. at least one character after single space
-//8. 0 or more characters until the end of the line
-meta = nl '+' whitespace+ key:safe_chars ':' whitespace* value:all_chars { return {key:key, value:value} }
+/* UPDATES */
 
-// section delimiters (updates/issues)
-// 1. exact 3 '-' characters
-// 2. new line character
-delimiter = update_delimiter nl / nl+ '## ' all_chars meta
+UPDATE = DIVIDER UPDATE_DELIMITER update:UPDATE_META body:BODY? {
+  update.body = body || ''
+  return update
+}
 
-// anything except delimiters
-anything = !delimiter char:. { return char }
+UPDATE_DELIMITER = '---'
 
-// anything except newline
-all_chars = chars:(!nl char:. { return char })+ { return chars.join('') }
+/* GENERAL TOKEN DEFINITIONS */
 
-// newline character
-nl =  '\r\n' / '\r' / '\n'
+// could be delimited by another issue, but then parse errors get eaten by issue body
+DELIMITER = NEWLINE EOF / DIVIDER (UPDATE_DELIMITER META_ITEM / TITLE META_ITEM)
+TO_EOL = !NEWLINE char:. { return char }
+TO_DELIMITER = content:(!DELIMITER char:. { return char })* { return content.join('') }
+ALPHAS = chars:[a-zA-Z]+ { return chars.join('') } 
+DIVIDER = NEWLINE NEWLINE
 
-// characters considered safe (for use in meta keys for example)
-// 1. at least one keyword characters, without spaces
-safe_chars = chars:[a-zA-Z_-]+ { return chars.join('') }
-
-whitespace = '\t' / ' ' / nl
+NEWLINE =  '\r\n' / '\r' / '\n'
+SPACE = ' '
+WHITESPACE = '\t' / SPACE
+EOF = !.
