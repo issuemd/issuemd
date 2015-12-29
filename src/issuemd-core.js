@@ -253,9 +253,10 @@
 
                     each(this, function (issue) {
 
+                        // TODO: make sure `original.meta` and `updates` are unique
                         var issueJsonIn = looseJsonToIssueJson(attrs, true);
-                        issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta); // TODO: unique
-                        issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates); // TODO: unique
+                        issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta);
+                        issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates);
                         issue.original = extend(issue.original, issueJsonIn.original);
 
                     });
