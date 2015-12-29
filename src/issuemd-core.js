@@ -572,7 +572,6 @@
 
             var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8');
 
-            // TODO: read templates from files, not strings
             return renderMustache(template, issue);
 
         }
@@ -583,8 +582,7 @@
 
                 var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
 
-                // TODO: figure out better way to handle trailing newlines after last issue
-                return renderMustache(template, issueJSObject).trim();
+                return renderMustache(template, issueJSObject);
 
             }
 
