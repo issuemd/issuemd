@@ -16,16 +16,24 @@
         constructor: Issuemd,
 
         // enable collections to behave like an Array
+        // ... and override default string/json methods
         length: 0,
         push: [].push,
         sort: [].sort,
         splice: [].splice,
         pop: [].pop,
+        concat: function (arr) {
+            return createCollection(this.toArray().concat(arr.toArray()));
+        },
         toArray: function () {
             return [].slice.call(this);
         },
-        concat: function (arr) {
-            return createCollection(this.toArray().concat(arr.toArray()));
+        toJSON: function () {
+            // same implementation as .toArray
+            return [].slice.call(this);
+        },
+        toString: function (cols, templateOverride) {
+            return formatter.string(this.toArray(), cols, templateOverride);
         },
 
         sortUpdates: require('./plugins/issuemd.sort-updates.js')
@@ -106,18 +114,7 @@
 
     function getMethods() {
 
-        // TODO: re-implement these currently unused methods
-        // toJSON: passThis(toJSON),
-        // html: passThis(html),
-        // clone: passThis(clone),
-        // remove: passThis(remove),
-        // signature: passThis(signature),
-
         return {
-
-            toString: function (cols, templateOverride) {
-                return formatter.string(this.toArray(), cols, templateOverride);
-            },
 
             // accepts `input` object including modifier, modified
             update: function (input /*...*/ ) {
@@ -217,6 +214,10 @@
 
             },
 
+            html: function (templateOverride) {
+                return formatter.html(this.toArray(), templateOverride);
+            },
+
             // TODO: rationalise function signature
             md: function (input, templateOverride) {
 
@@ -269,6 +270,37 @@
 
             add: function (issueJson) {
                 this.push(createIssue(issueJson));
+            },
+
+            // remove the issues specified by `input` (accepts array, or one or more argument specified indices to be deleted)
+            remove: function (input) {
+
+                var collection = this;
+
+                // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
+                input = type(input) === 'array' ? input : [].slice.call(arguments);
+
+                // sort and reverse input so that elements are removed from back, and don't change position of next one to remove
+                input.sort().reverse();
+
+                each(input, function (index) {
+                    collection.splice(index, 1);
+                });
+
+                return collection;
+
+            },
+
+            // return a deep copy of a collection - breaking references
+            clone: function () {
+                return issuemd(copy(this.toArray()));
+            },
+
+            // return signature of first issue in collection
+            signature: function () {
+                var creator = this.attr('creator');
+                var created = this.attr('created');
+                return creator && created ? composeSignature(creator, created) : null;
             },
 
             comments: function () {
@@ -810,7 +842,6 @@
         return require('blueimp-md5').md5(string).slice(0, size || 32);
     }
 
-    // TODO: should these be moved back into utils - are they shared between libs?
     /*****************
      * general utils *
      *****************/
