@@ -218,13 +218,13 @@
                 return formatter.html(this.toArray(), options || {});
             },
 
-            md: function (input/*, options*/) {
+            md: function (input /*, options*/ ) {
 
                 var options = getLastArgument(arguments, 'object') || {};
 
                 if (type(input) === 'string') {
                     return this.merge(input);
-                } else if(!!options){
+                } else if (!!options) {
                     return formatter.md(this.toArray(), options);
                 }
 
@@ -255,7 +255,6 @@
 
                     each(this, function (issue) {
 
-                        // TODO: make sure `original.meta` and `updates` are unique
                         var issueJsonIn = looseJsonToIssueJson(attrs, true);
                         issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta);
                         issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates);
@@ -341,88 +340,9 @@
         var fs = require('fs');
 
         var mustache = require('mustache'),
-            // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
             marked = require('marked');
 
         /* mustache helper functions */
-
-        // TODO: better handling of the widest element
-        var widest = 0;
-        var cols = 80;
-
-        var curtailed = function () {
-
-            return function (str, render) {
-                var content = render(str);
-                return curtail(content + repeat(' ', (cols || 80) - 4 - content.length), (cols || 80) - 4);
-            };
-
-        };
-
-        var body = function () {
-
-            return function (str, render) {
-                var content = render(str);
-                return content + repeat(' ', (cols || 80) - 4 - content.length);
-            };
-
-        };
-
-        var padleft = function () {
-
-            return function (str, render) {
-                return repeat(render(str), widest);
-            };
-
-        };
-
-        var padright = function () {
-
-            return function (str, render) {
-                return repeat(render(str), (cols || 80) - widest - 7);
-            };
-
-        };
-
-        var pad12 = function () {
-
-            return function (str, render) {
-                return (render(str) + '            ').substr(0, 12);
-            };
-
-        };
-
-        var key = function () {
-
-            return function (str, render) {
-                var content = render(str);
-                return content + repeat(' ', widest - content.length);
-            };
-
-        };
-        var value = function () {
-
-            return function (str, render) {
-                return render(str) + repeat(' ', (cols || 80) - 7 - widest - render(str).length);
-            };
-
-        };
-
-        function pad() {
-
-            return function (str, render) {
-                return repeat(render(str), (cols || 80) - 4);
-            };
-
-        }
-
-        function pad6() {
-
-            return function (str, render) {
-                return (render(str) + '      ').substr(0, 6);
-            };
-
-        }
 
         return {
             render: {
@@ -435,9 +355,9 @@
             summary: json2summaryTable
         };
 
-        function json2summaryTable(issueJSObject, colsIn, templateOverride) {
+        function json2summaryTable(issueJSObject, cols, templateOverride) {
 
-            cols = colsIn || cols;
+            cols = cols || 80;
 
             var data = [];
 
@@ -458,38 +378,28 @@
             var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8');
 
             return renderMustache(template, {
-                util: {
-                    body: body,
-                    key: key,
-                    value: value,
-                    pad: pad,
-                    pad6: pad6,
-                    pad12: pad12,
-                    padleft: padleft,
-                    padright: padright,
-                    curtailed: curtailed
-                },
+                util: getFormatterUtils(0, cols),
                 data: data
             });
 
         }
 
-        function json2string(issueJSObject, colsIn, templateOverride) {
+        function json2string(issueJSObject, cols, templateOverride) {
 
-            cols = colsIn || cols;
+            cols = cols || 80;
 
             var splitLines = function (input) {
 
                 var output = [];
 
-                var lines = wordwrap(input, ((cols || 80) - 4)).replace(/\n\n+/, '\n\n').split('\n');
+                var lines = wordwrap(input, (cols - 4)).replace(/\n\n+/, '\n\n').split('\n');
 
                 each(lines, function (item) {
 
-                    if (item.length < ((cols || 80) - 4)) {
+                    if (item.length < (cols - 4)) {
                         output.push(item);
                     } else {
-                        output = output.concat(item.match(new RegExp('.{1,' + ((cols || 80) - 4) + '}', 'g')));
+                        output = output.concat(item.match(new RegExp('.{1,' + (cols - 4) + '}', 'g')));
                     }
 
                 });
@@ -513,8 +423,8 @@
                             comments: []
                         };
 
-                    // TODO: better handling of ensuring minimum size of composite fields are met
-                    widest = 'signature'.length;
+                    var widest = 'signature'.length;
+
                     each(issue.attr(), function (value, key) {
                         if (key === 'title' || key === 'body') {
 
@@ -550,14 +460,7 @@
                     });
 
                     out.push(renderMustache(template, {
-                        util: {
-                            body: body,
-                            key: key,
-                            value: value,
-                            pad: pad,
-                            padleft: padleft,
-                            padright: padright
-                        },
+                        util: getFormatterUtils(widest, cols),
                         data: data
                     }));
 
@@ -565,6 +468,98 @@
 
                 return out.join('\n');
             }
+
+        }
+
+        function getFormatterUtils(widest, cols) {
+
+            cols = cols || 80;
+
+            var curtailed = function () {
+
+                return function (str, render) {
+                    var content = render(str);
+                    return curtail(content + repeat(' ', cols - 4 - content.length), cols - 4);
+                };
+
+            };
+
+            var body = function () {
+
+                return function (str, render) {
+                    var content = render(str);
+                    return content + repeat(' ', cols - 4 - content.length);
+                };
+
+            };
+
+            var padleft = function () {
+
+                return function (str, render) {
+                    return repeat(render(str), widest);
+                };
+
+            };
+
+            var padright = function () {
+
+                return function (str, render) {
+                    return repeat(render(str), cols - widest - 7);
+                };
+
+            };
+
+            var pad12 = function () {
+
+                return function (str, render) {
+                    return (render(str) + '            ').substr(0, 12);
+                };
+
+            };
+
+            var key = function () {
+
+                return function (str, render) {
+                    var content = render(str);
+                    return content + repeat(' ', widest - content.length);
+                };
+
+            };
+            var value = function () {
+
+                return function (str, render) {
+                    return render(str) + repeat(' ', cols - 7 - widest - render(str).length);
+                };
+
+            };
+
+            function pad() {
+
+                return function (str, render) {
+                    return repeat(render(str), cols - 4);
+                };
+
+            }
+
+            function pad6() {
+
+                return function (str, render) {
+                    return (render(str) + '      ').substr(0, 6);
+                };
+
+            }
+
+            return {
+                body: body,
+                key: key,
+                value: value,
+                pad: pad,
+                pad6: pad6,
+                pad12: pad12,
+                padleft: padleft,
+                padright: padright,
+                curtailed: curtailed
+            };
 
         }
 
@@ -580,11 +575,11 @@
 
             var issues = copy(issueJSObject);
 
-            each(issues, function(issue){
+            each(issues, function (issue) {
 
                 issue.original.body = issue.original.body ? marked(issue.original.body) : '';
 
-                each(issue.updates, function(update){
+                each(issue.updates, function (update) {
                     update.body = update.body ? marked(update.body) : '';
                 });
 
@@ -659,11 +654,6 @@
             }
             return true;
         }
-
-        // TODO: should the merge happen in place or not?
-        // // take copies of inputs
-        // left = copy(left);
-        // right = copy(right);
 
         var rightComments = copy(right.updates);
 
