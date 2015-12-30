@@ -234,7 +234,7 @@
             each: function (func) {
 
                 each(this, function (item) {
-                    func(issuemd([item]));
+                    return func(issuemd([item]));
                 });
 
                 return this;
@@ -837,7 +837,6 @@
         return Object.prototype.toString.call(me).split(/\W/)[2].toLowerCase();
     }
 
-    // TODO: Returning non-false is the same as a continue statement in a for loop
     function each(obj, iteratee, context) {
 
         if (obj === null || obj === undefined) {
@@ -857,16 +856,23 @@
         if (length === +length) {
 
             for (i = 0; i < length; i++) {
-                iteratee(obj[i], i, obj);
+
+                if (iteratee(obj[i], i, obj) === false) {
+                    break;
+                }
+
             }
 
         } else {
 
-            // TODO: IE 8 polyfill for Object.keys
-            var keys = Object.keys(obj);
+            var keys = objectKeys(obj);
 
             for (i = 0, length = keys.length; i < length; i++) {
-                iteratee(obj[keys[i]], keys[i], obj);
+
+                if (iteratee(obj[keys[i]], keys[i], obj) === false) {
+                    break;
+                }
+
             }
 
         }
