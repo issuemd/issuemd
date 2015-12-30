@@ -214,17 +214,18 @@
 
             },
 
-            html: function (templateOverride) {
-                return formatter.html(this.toArray(), templateOverride);
+            html: function (options) {
+                return formatter.html(this.toArray(), options || {});
             },
 
-            // TODO: rationalise function signature
-            md: function (input, templateOverride) {
+            md: function (input/*, options*/) {
 
-                if (typeof input === 'string') {
+                var options = getLastArgument(arguments, 'object') || {};
+
+                if (type(input) === 'string') {
                     return this.merge(input);
-                } else {
-                    return formatter.md(this.toArray(), templateOverride);
+                } else if(!!options){
+                    return formatter.md(this.toArray(), options);
                 }
 
             },
@@ -575,48 +576,31 @@
             return mustache.render(template, data);
         }
 
-        function json2html(issueJSObject, templateOverride) {
+        function json2html(issueJSObject, options) {
 
-            var i;
+            var issues = copy(issueJSObject);
 
-            issueJSObject = type(issueJSObject) !== 'array' ? [issueJSObject] : issueJSObject;
+            each(issues, function(issue){
 
-            var issue = copy(issueJSObject);
+                issue.original.body = issue.original.body ? marked(issue.original.body) : '';
 
-            for (var j = issue.length; j--;) {
+                each(issue.updates, function(update){
+                    update.body = update.body ? marked(update.body) : '';
+                });
 
-                if (issue[j].original.body) {
-                    issue[j].original.body = marked(issue[j].original.body);
-                } else {
-                    issue[j].original.body = '';
-                }
+            });
 
-                for (i = issue[j].updates.length; i--;) {
+            var template = options.template || fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8');
 
-                    if (issue[j].updates[i].body) {
-                        issue[j].updates[i].body = marked(issue[j].updates[i].body);
-                    } else {
-                        issue[j].updates[i].body = '';
-                    }
-
-                }
-            }
-
-            var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8');
-
-            return renderMustache(template, issue);
+            return renderMustache(template, issues);
 
         }
 
-        function json2md(issueJSObject, templateOverride) {
+        function json2md(issueJSObject, options) {
 
-            if (issueJSObject) {
+            var template = options.template || fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
 
-                var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
-
-                return renderMustache(template, issueJSObject);
-
-            }
+            return renderMustache(template, issueJSObject);
 
         }
 
@@ -845,6 +829,12 @@
     /*****************
      * general utils *
      *****************/
+
+    // return last argument if it is of targetType, otherwise return null
+    function getLastArgument(args, targetType) {
+        var last = args[args.length - 1];
+        return type(last) === targetType ? last : null;
+    }
 
     function copy(input) {
         return JSON.parse(JSON.stringify(input));
