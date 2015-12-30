@@ -914,31 +914,46 @@
 
     }
 
-    // initially from: http://phpjs.org/functions/wordwrap/
-    // TODO: rewrite this function to be more easily understood/maintained
-    function wordwrap(str, intWidth, strBreak, cut) {
+    // more full featured implementation: https://gist.github.com/billymoon/91db9ccada62028b50c7
+    function wordwrap(str, intWidth) {
 
-        intWidth = ((arguments.length >= 2) ? arguments[1] : 75);
-        strBreak = ((arguments.length >= 3) ? arguments[2] : '\n');
-        cut = ((arguments.length >= 4) ? arguments[3] : false);
+        var result = [];
 
-        var i, j, lineCount, line, result;
+        each(str.split(/\r\n|\n|\r/), function (line) {
 
-        str += '';
+            line = line.replace(/^\s\b/, '');
 
-        if (intWidth < 1) {
-            return str;
-        }
+            var endPosition, segment,
+                out = '';
 
-        for (i = -1, lineCount = (result = str.split(/\r\n|\n|\r/)).length; ++i < lineCount; result[i] += line) {
+            while (line.length > intWidth) {
 
-            for (line = result[i], result[i] = ''; line.length > intWidth; result[i] += line.slice(0, j) + ((line = line.slice(j)).length && (line = line.replace(/^\s\b/, '') || true) ? strBreak : '')) {
-                j = cut === 2 || (j = line.slice(0, intWidth + 1).match(/\S*(\s)?$/))[1] ? intWidth : j.input.length - j[0].length || cut === 1 && intWidth || j.input.length + (j = line.slice(intWidth).match(/^\S*/))[0].length;
+                segment = line.slice(0, intWidth + 1).match(/\S*(\s)?$/);
+
+                if (!!segment[1]) {
+                    endPosition = intWidth;
+                } else if (segment.input.length - segment[0].length) {
+                    endPosition = segment.input.length - segment[0].length;
+                } else {
+                    endPosition = intWidth;
+                }
+
+                out += line.slice(0, endPosition);
+
+                line = line.slice(endPosition);
+
+                if (!!line && line.length) {
+                    out += '\n';
+                }
+
             }
 
-        }
+            result.push(out + line);
+
+        });
 
         return result.join('\n');
+
     }
 
     /***************************************
