@@ -214,17 +214,18 @@
 
             },
 
-            html: function (templateOverride) {
-                return formatter.html(this.toArray(), templateOverride);
+            html: function (options) {
+                return formatter.html(this.toArray(), options || {});
             },
 
-            // TODO: rationalise function signature
-            md: function (input, templateOverride) {
+            md: function (input /*, options*/ ) {
 
-                if (typeof input === 'string') {
+                var options = getLastArgument(arguments, 'object') || {};
+
+                if (type(input) === 'string') {
                     return this.merge(input);
-                } else {
-                    return formatter.md(this.toArray(), templateOverride);
+                } else if (!!options) {
+                    return formatter.md(this.toArray(), options);
                 }
 
             },
@@ -233,7 +234,7 @@
             each: function (func) {
 
                 each(this, function (item) {
-                    func(issuemd([item]));
+                    return func(issuemd([item]));
                 });
 
                 return this;
@@ -254,7 +255,6 @@
 
                     each(this, function (issue) {
 
-                        // TODO: make sure `original.meta` and `updates` are unique
                         var issueJsonIn = looseJsonToIssueJson(attrs, true);
                         issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta);
                         issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates);
@@ -340,88 +340,9 @@
         var fs = require('fs');
 
         var mustache = require('mustache'),
-            // TODO: switch to https://github.com/timmyomahony/pagedown/ to permit escaping like stack overflow
             marked = require('marked');
 
         /* mustache helper functions */
-
-        // TODO: better handling of the widest element
-        var widest = 0;
-        var cols = 80;
-
-        var curtailed = function () {
-
-            return function (str, render) {
-                var content = render(str);
-                return curtail(content + repeat(' ', (cols || 80) - 4 - content.length), (cols || 80) - 4);
-            };
-
-        };
-
-        var body = function () {
-
-            return function (str, render) {
-                var content = render(str);
-                return content + repeat(' ', (cols || 80) - 4 - content.length);
-            };
-
-        };
-
-        var padleft = function () {
-
-            return function (str, render) {
-                return repeat(render(str), widest);
-            };
-
-        };
-
-        var padright = function () {
-
-            return function (str, render) {
-                return repeat(render(str), (cols || 80) - widest - 7);
-            };
-
-        };
-
-        var pad12 = function () {
-
-            return function (str, render) {
-                return (render(str) + '            ').substr(0, 12);
-            };
-
-        };
-
-        var key = function () {
-
-            return function (str, render) {
-                var content = render(str);
-                return content + repeat(' ', widest - content.length);
-            };
-
-        };
-        var value = function () {
-
-            return function (str, render) {
-                return render(str) + repeat(' ', (cols || 80) - 7 - widest - render(str).length);
-            };
-
-        };
-
-        function pad() {
-
-            return function (str, render) {
-                return repeat(render(str), (cols || 80) - 4);
-            };
-
-        }
-
-        function pad6() {
-
-            return function (str, render) {
-                return (render(str) + '      ').substr(0, 6);
-            };
-
-        }
 
         return {
             render: {
@@ -434,9 +355,9 @@
             summary: json2summaryTable
         };
 
-        function json2summaryTable(issueJSObject, colsIn, templateOverride) {
+        function json2summaryTable(issueJSObject, cols, templateOverride) {
 
-            cols = colsIn || cols;
+            cols = cols || 80;
 
             var data = [];
 
@@ -457,38 +378,28 @@
             var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8');
 
             return renderMustache(template, {
-                util: {
-                    body: body,
-                    key: key,
-                    value: value,
-                    pad: pad,
-                    pad6: pad6,
-                    pad12: pad12,
-                    padleft: padleft,
-                    padright: padright,
-                    curtailed: curtailed
-                },
+                util: getFormatterUtils(0, cols),
                 data: data
             });
 
         }
 
-        function json2string(issueJSObject, colsIn, templateOverride) {
+        function json2string(issueJSObject, cols, templateOverride) {
 
-            cols = colsIn || cols;
+            cols = cols || 80;
 
             var splitLines = function (input) {
 
                 var output = [];
 
-                var lines = wordwrap(input, ((cols || 80) - 4)).replace(/\n\n+/, '\n\n').split('\n');
+                var lines = wordwrap(input, (cols - 4)).replace(/\n\n+/, '\n\n').split('\n');
 
                 each(lines, function (item) {
 
-                    if (item.length < ((cols || 80) - 4)) {
+                    if (item.length < (cols - 4)) {
                         output.push(item);
                     } else {
-                        output = output.concat(item.match(new RegExp('.{1,' + ((cols || 80) - 4) + '}', 'g')));
+                        output = output.concat(item.match(new RegExp('.{1,' + (cols - 4) + '}', 'g')));
                     }
 
                 });
@@ -512,8 +423,8 @@
                             comments: []
                         };
 
-                    // TODO: better handling of ensuring minimum size of composite fields are met
-                    widest = 'signature'.length;
+                    var widest = 'signature'.length;
+
                     each(issue.attr(), function (value, key) {
                         if (key === 'title' || key === 'body') {
 
@@ -549,14 +460,7 @@
                     });
 
                     out.push(renderMustache(template, {
-                        util: {
-                            body: body,
-                            key: key,
-                            value: value,
-                            pad: pad,
-                            padleft: padleft,
-                            padright: padright
-                        },
+                        util: getFormatterUtils(widest, cols),
                         data: data
                     }));
 
@@ -564,6 +468,98 @@
 
                 return out.join('\n');
             }
+
+        }
+
+        function getFormatterUtils(widest, cols) {
+
+            cols = cols || 80;
+
+            var curtailed = function () {
+
+                return function (str, render) {
+                    var content = render(str);
+                    return curtail(content + repeat(' ', cols - 4 - content.length), cols - 4);
+                };
+
+            };
+
+            var body = function () {
+
+                return function (str, render) {
+                    var content = render(str);
+                    return content + repeat(' ', cols - 4 - content.length);
+                };
+
+            };
+
+            var padleft = function () {
+
+                return function (str, render) {
+                    return repeat(render(str), widest);
+                };
+
+            };
+
+            var padright = function () {
+
+                return function (str, render) {
+                    return repeat(render(str), cols - widest - 7);
+                };
+
+            };
+
+            var pad12 = function () {
+
+                return function (str, render) {
+                    return (render(str) + '            ').substr(0, 12);
+                };
+
+            };
+
+            var key = function () {
+
+                return function (str, render) {
+                    var content = render(str);
+                    return content + repeat(' ', widest - content.length);
+                };
+
+            };
+            var value = function () {
+
+                return function (str, render) {
+                    return render(str) + repeat(' ', cols - 7 - widest - render(str).length);
+                };
+
+            };
+
+            function pad() {
+
+                return function (str, render) {
+                    return repeat(render(str), cols - 4);
+                };
+
+            }
+
+            function pad6() {
+
+                return function (str, render) {
+                    return (render(str) + '      ').substr(0, 6);
+                };
+
+            }
+
+            return {
+                body: body,
+                key: key,
+                value: value,
+                pad: pad,
+                pad6: pad6,
+                pad12: pad12,
+                padleft: padleft,
+                padright: padright,
+                curtailed: curtailed
+            };
 
         }
 
@@ -575,48 +571,31 @@
             return mustache.render(template, data);
         }
 
-        function json2html(issueJSObject, templateOverride) {
+        function json2html(issueJSObject, options) {
 
-            var i;
+            var issues = copy(issueJSObject);
 
-            issueJSObject = type(issueJSObject) !== 'array' ? [issueJSObject] : issueJSObject;
+            each(issues, function (issue) {
 
-            var issue = copy(issueJSObject);
+                issue.original.body = issue.original.body ? marked(issue.original.body) : '';
 
-            for (var j = issue.length; j--;) {
+                each(issue.updates, function (update) {
+                    update.body = update.body ? marked(update.body) : '';
+                });
 
-                if (issue[j].original.body) {
-                    issue[j].original.body = marked(issue[j].original.body);
-                } else {
-                    issue[j].original.body = '';
-                }
+            });
 
-                for (i = issue[j].updates.length; i--;) {
+            var template = options.template || fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8');
 
-                    if (issue[j].updates[i].body) {
-                        issue[j].updates[i].body = marked(issue[j].updates[i].body);
-                    } else {
-                        issue[j].updates[i].body = '';
-                    }
-
-                }
-            }
-
-            var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8');
-
-            return renderMustache(template, issue);
+            return renderMustache(template, issues);
 
         }
 
-        function json2md(issueJSObject, templateOverride) {
+        function json2md(issueJSObject, options) {
 
-            if (issueJSObject) {
+            var template = options.template || fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
 
-                var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8');
-
-                return renderMustache(template, issueJSObject);
-
-            }
+            return renderMustache(template, issueJSObject);
 
         }
 
@@ -676,12 +655,7 @@
             return true;
         }
 
-        // TODO: should the merge happen in place or not?
-        // // take copies of inputs
-        // left = copy(left);
-        // right = copy(right);
-
-        var rightComments = copy(right.updates);
+        var rightUpdates = copy(right.updates);
 
         // concat and sort issues
         var sorted = right.updates ? right.updates.concat(left.updates).sort(function (a, b) {
@@ -702,12 +676,10 @@
         right.updates = null;
 
         if (!objectsEqual(left, right)) {
-            // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
-            console.log('issues are not identical - head must not be modified, only updates added');
+            throw (Error('issues are not identical - head must not be modified, only updates added'));
         }
 
-        // TODO: better way to ensure updates on right side remain untouched
-        right.updates = rightComments;
+        right.updates = rightUpdates;
 
         left.updates = merged;
 
@@ -764,7 +736,6 @@
         return trim(creator) + ' @ ' + trim(created);
     }
 
-    // TODO: think about how to treat meta vs attr from user's perspective
     function issueJsonToLoose(issue) {
 
         var out = (issue || {}).original || {};
@@ -783,7 +754,7 @@
     // coerces all values to strings, adds default created/modified timestamps
     function looseJsonToIssueJson(original /*, updates..., sparse*/ ) {
 
-        var sparse = type(arguments[arguments.length - 1]) === 'boolean' && arguments[arguments.length - 1];
+        var sparse = getLastArgument(arguments, 'boolean', false);
 
         var updates = [].slice(arguments, 1);
 
@@ -815,8 +786,6 @@
 
         });
 
-        // TODO: does it make sense to set modified time for all updates if not set?
-        // TODO: take all subsequent arguments as updates, or array of updates which will not be modified
         each(out.updates, function (update) {
             update.modified = update.modified || now();
         });
@@ -837,6 +806,14 @@
 
     }
 
+    function now() {
+        return dateString(new Date());
+    }
+
+    function dateString(inputDate) {
+        inputDate.toISOString().replace('T', ' ').slice(0, 19);
+    }
+
     // return firstbits hash of input, optionally specify `size` which defaults to 32
     function hash(string, size) {
         return require('blueimp-md5').md5(string).slice(0, size || 32);
@@ -846,6 +823,12 @@
      * general utils *
      *****************/
 
+    // return last argument if it is of targetType, otherwise return null
+    function getLastArgument(args, targetType, defaultValue) {
+        var last = args[args.length - 1];
+        return type(last) === targetType ? last : defaultValue || null;
+    }
+
     function copy(input) {
         return JSON.parse(JSON.stringify(input));
     }
@@ -854,12 +837,6 @@
         return Object.prototype.toString.call(me).split(/\W/)[2].toLowerCase();
     }
 
-    // TODO: more general date converter method required
-    function now() {
-        return (new Date()).toISOString().replace('T', ' ').slice(0, 19);
-    }
-
-    // TODO: Returning non-false is the same as a continue statement in a for loop
     function each(obj, iteratee, context) {
 
         if (obj === null || obj === undefined) {
@@ -879,16 +856,23 @@
         if (length === +length) {
 
             for (i = 0; i < length; i++) {
-                iteratee(obj[i], i, obj);
+
+                if (iteratee(obj[i], i, obj) === false) {
+                    break;
+                }
+
             }
 
         } else {
 
-            // TODO: IE 8 polyfill for Object.keys
-            var keys = Object.keys(obj);
+            var keys = objectKeys(obj);
 
             for (i = 0, length = keys.length; i < length; i++) {
-                iteratee(obj[keys[i]], keys[i], obj);
+
+                if (iteratee(obj[keys[i]], keys[i], obj) === false) {
+                    break;
+                }
+
             }
 
         }
@@ -930,31 +914,46 @@
 
     }
 
-    // initially from: http://phpjs.org/functions/wordwrap/
-    // TODO: rewrite this function to be more easily understood/maintained
-    function wordwrap(str, intWidth, strBreak, cut) {
+    // more full featured implementation: https://gist.github.com/billymoon/91db9ccada62028b50c7
+    function wordwrap(str, intWidth) {
 
-        intWidth = ((arguments.length >= 2) ? arguments[1] : 75);
-        strBreak = ((arguments.length >= 3) ? arguments[2] : '\n');
-        cut = ((arguments.length >= 4) ? arguments[3] : false);
+        var result = [];
 
-        var i, j, lineCount, line, result;
+        each(str.split(/\r\n|\n|\r/), function (line) {
 
-        str += '';
+            line = line.replace(/^\s\b/, '');
 
-        if (intWidth < 1) {
-            return str;
-        }
+            var endPosition, segment,
+                out = '';
 
-        for (i = -1, lineCount = (result = str.split(/\r\n|\n|\r/)).length; ++i < lineCount; result[i] += line) {
+            while (line.length > intWidth) {
 
-            for (line = result[i], result[i] = ''; line.length > intWidth; result[i] += line.slice(0, j) + ((line = line.slice(j)).length && (line = line.replace(/^\s\b/, '') || true) ? strBreak : '')) {
-                j = cut === 2 || (j = line.slice(0, intWidth + 1).match(/\S*(\s)?$/))[1] ? intWidth : j.input.length - j[0].length || cut === 1 && intWidth || j.input.length + (j = line.slice(intWidth).match(/^\S*/))[0].length;
+                segment = line.slice(0, intWidth + 1).match(/\S*(\s)?$/);
+
+                if (!!segment[1]) {
+                    endPosition = intWidth;
+                } else if (segment.input.length - segment[0].length) {
+                    endPosition = segment.input.length - segment[0].length;
+                } else {
+                    endPosition = intWidth;
+                }
+
+                out += line.slice(0, endPosition);
+
+                line = line.slice(endPosition);
+
+                if (!!line && line.length) {
+                    out += '\n';
+                }
+
             }
 
-        }
+            result.push(out + line);
+
+        });
 
         return result.join('\n');
+
     }
 
     /***************************************
