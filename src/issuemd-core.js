@@ -655,7 +655,7 @@
             return true;
         }
 
-        var rightComments = copy(right.updates);
+        var rightUpdates = copy(right.updates);
 
         // concat and sort issues
         var sorted = right.updates ? right.updates.concat(left.updates).sort(function (a, b) {
@@ -676,12 +676,10 @@
         right.updates = null;
 
         if (!objectsEqual(left, right)) {
-            // TODO: better error handling required here - perhaps like: http://stackoverflow.com/a/5188232/665261
-            console.log('issues are not identical - head must not be modified, only updates added');
+            throw (Error('issues are not identical - head must not be modified, only updates added'));
         }
 
-        // TODO: better way to ensure updates on right side remain untouched
-        right.updates = rightComments;
+        right.updates = rightUpdates;
 
         left.updates = merged;
 
@@ -738,7 +736,6 @@
         return trim(creator) + ' @ ' + trim(created);
     }
 
-    // TODO: think about how to treat meta vs attr from user's perspective
     function issueJsonToLoose(issue) {
 
         var out = (issue || {}).original || {};
@@ -757,7 +754,7 @@
     // coerces all values to strings, adds default created/modified timestamps
     function looseJsonToIssueJson(original /*, updates..., sparse*/ ) {
 
-        var sparse = type(arguments[arguments.length - 1]) === 'boolean' && arguments[arguments.length - 1];
+        var sparse = getLastArgument(arguments, 'boolean', false);
 
         var updates = [].slice(arguments, 1);
 
@@ -789,8 +786,6 @@
 
         });
 
-        // TODO: does it make sense to set modified time for all updates if not set?
-        // TODO: take all subsequent arguments as updates, or array of updates which will not be modified
         each(out.updates, function (update) {
             update.modified = update.modified || now();
         });
@@ -811,6 +806,14 @@
 
     }
 
+    function now() {
+        return dateString(new Date());
+    }
+
+    function dateString(inputDate) {
+        inputDate.toISOString().replace('T', ' ').slice(0, 19);
+    }
+
     // return firstbits hash of input, optionally specify `size` which defaults to 32
     function hash(string, size) {
         return require('blueimp-md5').md5(string).slice(0, size || 32);
@@ -821,9 +824,9 @@
      *****************/
 
     // return last argument if it is of targetType, otherwise return null
-    function getLastArgument(args, targetType) {
+    function getLastArgument(args, targetType, defaultValue) {
         var last = args[args.length - 1];
-        return type(last) === targetType ? last : null;
+        return type(last) === targetType ? last : defaultValue || null;
     }
 
     function copy(input) {
@@ -832,11 +835,6 @@
 
     function type(me) {
         return Object.prototype.toString.call(me).split(/\W/)[2].toLowerCase();
-    }
-
-    // TODO: more general date converter method required
-    function now() {
-        return (new Date()).toISOString().replace('T', ' ').slice(0, 19);
     }
 
     // TODO: Returning non-false is the same as a continue statement in a for loop
