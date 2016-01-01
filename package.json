@@ -5,16 +5,12 @@
   "main": "src/issuemd-core",
   "scripts": {
     "start": "npm run format && npm run lint && npm run test && npm run build",
-    "format": "js-beautify -r src/*.js test/*.js",
+    "format": "bash -c \"js-beautify -f src/*.js src/*/*.js test/*.js -r\"",
     "lint": "jshint src test",
-    "test": "./node_modules/minijasminenode/bin/minijn test/*.unit.js",
-    "test:dist": "ENVIRONMENT=dist npm test",
+    "test": "bash -c \"minijasminenode --noStack --verbose test/*.unit.js\"",
+    "test:dist": "bash -c \"ENVIRONMENT=dist npm test\"",
     "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
     "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
-    "bump": "npm run bump:patch",
-    "bump:major": "npm --no-git-tag-version version major",
-    "bump:minor": "npm --no-git-tag-version version minor",
-    "bump:patch": "npm --no-git-tag-version version patch",
     "update": "updtr"
   },
   "repository": {
@@ -50,11 +46,11 @@
   },
   "devDependencies": {
     "aliasify": "^1.8.0",
-    "blueimp-md5": "^1.1.1",
+    "blueimp-md5": "^2.1.0",
     "brfs": "^1.4.1",
     "browserify": "^12.0.1",
     "browserify-versionify": "^1.0.6",
-    "chance": "^0.7.6",
+    "chance": "^0.8.0",
     "js-beautify": "^1.5.10",
     "jshint": "^2.9.1-rc1",
     "minijasminenode": "1.1.1",
