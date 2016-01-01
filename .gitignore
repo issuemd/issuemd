@@ -1,6 +1,8 @@
-node_modules
-misc
-build
-.DS_Store
 .issuerc
+misc/
+build/
+reports/
+issues/
+.DS_Store
+node_modules
 npm-debug.log

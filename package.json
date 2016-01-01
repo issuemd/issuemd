@@ -4,11 +4,12 @@
   "description": "issue tracking in hand",
   "main": "src/issuemd-core",
   "scripts": {
-    "start": "npm run format && npm run lint && npm run test && npm run build",
+    "start": "npm run format && npm run lint && npm run test:cover && npm run build",
     "format": "bash -c \"js-beautify -f src/*.js src/*/*.js test/*.js -r\"",
     "lint": "jshint src test",
     "test": "bash -c \"minijasminenode --noStack --verbose test/*.unit.js\"",
     "test:dist": "bash -c \"ENVIRONMENT=dist npm test\"",
+    "test:cover": "bash -c \"istanbul cover --print none --report none --dir reports/coverage -- node_modules/minijasminenode/bin/minijn --noStack --verbose test/*.unit.js\" && istanbul report --root reports/coverage text",
     "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd-core.js | uglifyjs -o issuemd.min.js",
     "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
     "update": "updtr"
@@ -51,6 +52,7 @@
     "browserify": "^12.0.1",
     "browserify-versionify": "^1.0.6",
     "chance": "^0.8.0",
+    "istanbul": "^0.4.1",
     "js-beautify": "^1.5.10",
     "jshint": "^2.9.1-rc1",
     "minijasminenode": "1.1.1",
