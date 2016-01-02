@@ -2,17 +2,16 @@
 
 module.exports = function (issuemd) {
 
+    // issuemd utils and helpers
     var utils = require('./utils.js');
     var helpers = require('./issuemd-helpers.js')(utils);
 
-    // 
+    // issuemd modules
     var issuemdParser = require('./parser/issuemd-parser-builder.js');
     var issuemdMerger = require('./issuemd-merger.js')(utils);
     var issuemdFormatter = require('./issuemd-formatter.js')(utils, issuemd);
 
     Issuemd.prototype = {
-
-        main: collectionMain,
 
         // don't use default object constructor so we can identify collections later on
         constructor: Issuemd,
@@ -26,25 +25,31 @@ module.exports = function (issuemd) {
         concat: contextToArg(collectionConcat),
         toArray: contextToArg(collectionToArray),
         // ... and override native default methods
-        toString: contextToArg(collectionToString),
         toJSON: contextToArg(collectionToJSON),
+        // toString: defined below...
 
-        // add collection methods
-        filter: contextToArg(collectionFilter),
-        comments: contextToArg(collectionComments),
-        signature: contextToArg(collectionSignature),
-        clone: contextToArg(collectionClone),
-        remove: contextToArg(collectionRemove),
-        add: contextToArg(collectionAdd),
-        attr: contextToArg(collectionAttr),
-        each: contextToArg(collectionEach),
+        // main antry point for library `issuemd.fn.main()` aliased to `issuemd()`
+        main: collectionMain,
+        // merge methods
+        merge: contextToArg(collectionMerge),
+        // formatter methods
+        toString: contextToArg(collectionToString),
+        summary: contextToArg(collectionSummary),
         md: contextToArg(collectionMd),
         html: contextToArg(collectionHtml),
-        eq: contextToArg(collectionEq),
-        merge: contextToArg(collectionMerge),
+        // helper methods
+        attr: contextToArg(collectionAttr),
+        signature: contextToArg(collectionSignature),
+        filter: contextToArg(collectionFilter),
         hash: contextToArg(collectionHash),
-        summary: contextToArg(collectionSummary),
         update: contextToArg(collectionUpdate),
+        // util methods
+        comments: contextToArg(collectionComments),
+        clone: contextToArg(collectionClone),
+        remove: contextToArg(collectionRemove),
+        each: contextToArg(collectionEach),
+        eq: contextToArg(collectionEq),
+        add: contextToArg(collectionAdd),
 
         // add isolated plugins
         sortUpdates: require('./plugins/issuemd.sort-updates.js')
@@ -57,6 +62,10 @@ module.exports = function (issuemd) {
 
     function Issue() {}
 
+    /***********************
+     * supporting funtions *
+     ***********************/
+
     // context proxy
     function contextToArg(func) {
         return function () {
@@ -64,12 +73,38 @@ module.exports = function (issuemd) {
         };
     }
 
-    /**************************
+    function createIssue(issueJson) {
 
-     **************************/
+        var instance = utils.extend(new Issue(), issueJson);
+        return instance;
 
-    function collectionToString(collection, cols, templateOverride) {
-        return issuemdFormatter.string(collection.toArray(), cols, templateOverride);
+    }
+
+    function createCollection(issues) {
+
+        var instance = new Issuemd();
+
+        for (var i = 0, len = issues.length; i < len; i++) {
+            instance.push(issues[i]);
+        }
+
+        return instance;
+
+    }
+
+    /**********************
+     * collection methods *
+     **********************/
+
+    // methods to use as native overrides
+    // ... also `function collectionToString` defined further down
+
+    function collectionConcat(collection, arr) {
+        return createCollection(collection.toArray().concat(arr.toArray()));
+    }
+
+    function collectionToArray(collection) {
+        return [].slice.call(collection);
     }
 
     function collectionToJSON(collection) {
@@ -77,18 +112,7 @@ module.exports = function (issuemd) {
         return [].slice.call(collection);
     }
 
-    function collectionToArray(collection) {
-        return [].slice.call(collection);
-    }
-
-    function collectionConcat(collection, arr) {
-        return createCollection(collection.toArray().concat(arr.toArray()));
-    }
-
-
-    /**************************
-
-     **************************/
+    // requiring parser/helpers/utils
 
     function collectionMain(arr) {
 
@@ -123,127 +147,10 @@ module.exports = function (issuemd) {
         function parsedHandler(issue) {
             issues.push(createIssue(issue));
         }
-    }
-
-
-    function collectionFilter(collection, first, second) {
-        return second ? filterByAttr(collection, first, second) : filterByFunction(collection, first);
-    }
-
-    function collectionComments(collection) {
-
-        if (collection[0]) {
-
-            var out = [];
-
-            utils.each(collection[0].updates, function (update) {
-
-                if (utils.type(update.body) === 'string' && update.body.length) {
-                    out.push(utils.copy(update));
-                }
-
-            });
-
-            return out;
-
-        }
 
     }
 
-    // return signature of first issue in collection
-    function collectionSignature(collection) {
-        var creator = collection.attr('creator');
-        var created = collection.attr('created');
-        return creator && created ? helpers.composeSignature(creator, created) : null;
-    }
-
-    // return a deep copy of a collection - breaking references
-    function collectionClone(collection) {
-        return issuemd(utils.copy(collection.toArray()));
-    }
-
-    // remove the issues specified by `input` (accepts array, or one or more argument specified indices to be deleted)
-    function collectionRemove(collection, input) {
-
-        // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
-        input = utils.type(input) === 'array' ? input : [].slice.call(arguments);
-
-        // sort and reverse input so that elements are removed from back, and don't change position of next one to remove
-        input.sort().reverse();
-
-        utils.each(input, function (index) {
-            collection.splice(index, 1);
-        });
-
-        return collection;
-
-    }
-
-    function collectionAdd(collection, issueJson) {
-        collection.push(createIssue(issueJson));
-    }
-
-    function collectionAttr(collection, attrs) {
-
-        if (!attrs) {
-
-            return helpers.issueJsonToLoose(collection.toArray()[0]);
-
-        } else if (utils.type(attrs) === 'string') {
-
-            return collection.attr()[attrs];
-
-        } else {
-
-            utils.each(collection, function (issue) {
-
-                var issueJsonIn = helpers.looseJsonToIssueJson(attrs, true);
-                issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta);
-                issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates);
-                issue.original = utils.extend(issue.original, issueJsonIn.original);
-
-            });
-
-            return collection;
-
-        }
-
-    }
-
-    // loops over each issue - like underscore's each
-    function collectionEach(collection, func) {
-
-        utils.each(collection, function (item) {
-            return func(issuemd([item]));
-        });
-
-        return collection;
-
-    }
-
-    function collectionMd(collection, input /*, options*/ ) {
-
-        var options = utils.getLastArgument(arguments, 'object') || {};
-
-        if (utils.type(input) === 'string') {
-            return collection.merge(input);
-        } else if (!!options) {
-            return issuemdFormatter.md(collection.toArray(), options);
-        }
-
-    }
-
-    function collectionHtml(collection, options) {
-        return issuemdFormatter.html(collection.toArray(), options || {});
-    }
-
-    function collectionEq(collection, index) {
-
-        var newCollection = issuemd();
-        newCollection.push(utils.copy(collection[index]));
-        return newCollection;
-
-    }
+    // requiring merger/helpers/utils
 
     function collectionMerge(collection, input) {
 
@@ -272,6 +179,114 @@ module.exports = function (issuemd) {
 
     }
 
+    // requiring formatter/utils
+
+    function collectionToString(collection, cols, templateOverride) {
+        return issuemdFormatter.string(collection.toArray(), cols, templateOverride);
+    }
+
+    // return string summary table of collection
+    function collectionSummary(collection, cols, templateOverride) {
+        return issuemdFormatter.summary(collection.toArray(), cols, templateOverride);
+    }
+
+    function collectionMd(collection, input /*, options*/ ) {
+
+        var options = utils.getLastArgument(arguments, 'object') || {};
+
+        if (utils.type(input) === 'string') {
+            return collection.merge(input);
+        } else if (!!options) {
+            return issuemdFormatter.md(collection.toArray(), options);
+        }
+
+    }
+
+    function collectionHtml(collection, options) {
+        return issuemdFormatter.html(collection.toArray(), options || {});
+    }
+
+    // requiring helpers/utils
+
+    function collectionAttr(collection, attrs) {
+
+        if (!attrs) {
+
+            return helpers.issueJsonToLoose(collection.toArray()[0]);
+
+        } else if (utils.type(attrs) === 'string') {
+
+            return collection.attr()[attrs];
+
+        } else {
+
+            utils.each(collection, function (issue) {
+
+                var issueJsonIn = helpers.looseJsonToIssueJson(attrs, true);
+                issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta);
+                issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates);
+                issue.original = utils.extend(issue.original, issueJsonIn.original);
+
+            });
+
+            return collection;
+
+        }
+    }
+
+    // return signature of first issue in collection
+    function collectionSignature(collection) {
+        var creator = collection.attr('creator');
+        var created = collection.attr('created');
+        return creator && created ? helpers.composeSignature(creator, created) : null;
+    }
+
+    function collectionFilter(collection, first, second) {
+
+        return second ? filterByAttr(collection, first, second) : filterByFunction(collection, first);
+
+        function filterByFunction(collection, filterFunction) {
+
+            var out = issuemd();
+
+            collection.each(function (item, index) {
+
+                if (filterFunction(item, index)) {
+                    out.merge(item);
+                }
+
+            });
+
+            return out;
+
+        }
+
+        function filterByAttr(collection, key, valueIn) {
+
+            var values = utils.type(valueIn) === 'array' ? valueIn : [valueIn];
+
+            return filterByFunction(collection, function (issue) {
+
+                var attrValue = issue.attr(key),
+                    match = false;
+
+                utils.each(values, function (value) {
+
+                    if (!match && (utils.type(value) === 'regexp' && value.test(attrValue)) || attrValue === value) {
+                        match = true;
+                        return match;
+                    }
+
+                });
+
+                return match;
+
+            });
+
+        }
+
+    }
+
     function collectionHash(collection /*, all*/ ) {
 
         var all = arguments[arguments.length - 1];
@@ -285,11 +300,6 @@ module.exports = function (issuemd) {
 
         return typeof all === 'boolean' && all ? arr : arr[0];
 
-    }
-
-    // return string summary table of collection
-    function collectionSummary(collection, cols, templateOverride) {
-        return issuemdFormatter.summary(collection.toArray(), cols, templateOverride);
     }
 
     // accepts `input` object including modifier, modified
@@ -335,67 +345,71 @@ module.exports = function (issuemd) {
         return collection;
     }
 
-    /***************************
-     * method creation helpers *
-     ***************************/
+    // requiring utils
 
-    function createIssue(issueJson) {
+    function collectionComments(collection) {
 
-        var instance = utils.extend(new Issue(), issueJson);
-        return instance;
+        if (collection[0]) {
 
-    }
+            var out = [];
 
-    function createCollection(issues) {
+            utils.each(collection[0].updates, function (update) {
 
-        var instance = new Issuemd();
-
-        for (var i = 0, len = issues.length; i < len; i++) {
-            instance.push(issues[i]);
-        }
-
-        return instance;
-
-    }
-
-    function filterByFunction(collection, filterFunction) {
-
-        var out = issuemd();
-
-        collection.each(function (item, index) {
-
-            if (filterFunction(item, index)) {
-                out.merge(item);
-            }
-
-        });
-
-        return out;
-
-    }
-
-    function filterByAttr(collection, key, valueIn) {
-
-        var values = utils.type(valueIn) === 'array' ? valueIn : [valueIn];
-
-        return filterByFunction(collection, function (issue) {
-
-            var attrValue = issue.attr(key),
-                match = false;
-
-            utils.each(values, function (value) {
-
-                if (!match && (utils.type(value) === 'regexp' && value.test(attrValue)) || attrValue === value) {
-                    match = true;
-                    return match;
+                if (utils.type(update.body) === 'string' && update.body.length) {
+                    out.push(utils.copy(update));
                 }
 
             });
 
-            return match;
+            return out;
 
+        }
+
+    }
+
+    // return a deep copy of a collection - breaking references
+    function collectionClone(collection) {
+        return issuemd(utils.copy(collection.toArray()));
+    }
+
+    // remove the issues specified by `input` (accepts array, or one or more argument specified indices to be deleted)
+    function collectionRemove(collection, input) {
+
+        // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
+        input = utils.type(input) === 'array' ? input : [].slice.call(arguments);
+
+        // sort and reverse input so that elements are removed from back, and don't change position of next one to remove
+        input.sort().reverse();
+
+        utils.each(input, function (index) {
+            collection.splice(index, 1);
         });
 
+        return collection;
+
+    }
+
+    // loops over each issue - like underscore's each
+    function collectionEach(collection, func) {
+
+        utils.each(collection, function (item) {
+            return func(issuemd([item]));
+        });
+
+        return collection;
+
+    }
+
+    function collectionEq(collection, index) {
+
+        var newCollection = issuemd();
+        newCollection.push(utils.copy(collection[index]));
+        return newCollection;
+
+    }
+
+    function collectionAdd(collection, issueJson) {
+        collection.push(createIssue(issueJson));
     }
 
 };
