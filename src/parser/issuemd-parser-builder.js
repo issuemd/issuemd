@@ -7,4 +7,4 @@ module.exports = (function () {
 
     return PEG.buildParser(fs.readFileSync(__dirname + '/issuemd-parser.pegjs', 'utf8'));
 
-})();
+}());
