@@ -117,7 +117,7 @@ module.exports = function (issuemd) {
     function collectionMain(arr) {
 
         // if collection passed in, just return it without further ado
-        if (arr instanceof issuemd.fn.constructor) {
+        if (arr instanceof Issuemd.prototype.constructor) {
             return arr;
         }
 
@@ -156,8 +156,6 @@ module.exports = function (issuemd) {
 
         var hashes = collection.hash(true);
 
-        var that = collection;
-
         utils.each(input, function (issue) {
 
             var idx;
@@ -165,17 +163,17 @@ module.exports = function (issuemd) {
             var issueHash = helpers.hash(helpers.composeSignature(issue.original.creator, issue.original.created));
 
             if ((idx = hashes.indexOf(issueHash)) !== -1) {
-                issuemdMerger(that[idx], issue);
+                issuemdMerger(collection[idx], issue);
                 merged = true;
             }
 
             if (!merged) {
-                that.push(issue);
+                collection.push(issue);
             }
 
         });
 
-        return that;
+        return collection;
 
     }
 
@@ -292,10 +290,10 @@ module.exports = function (issuemd) {
         var all = arguments[arguments.length - 1];
         var arr = [];
         var howMany = typeof all === 'boolean' && all ? collection.length : 1;
-        var length = typeof arguments[0] === 'number' ? arguments[0] : undefined;
+        var length = typeof arguments[1] === 'number' ? arguments[1] : undefined;
 
         for (var i = 0; i < howMany; i++) {
-            arr.push(helpers.hash(helpers.composeSignature(collection.attr('creator'), collection.attr('created'))), length);
+            arr.push(helpers.hash(helpers.composeSignature(collection.attr('creator'), collection.attr('created')), length));
         }
 
         return typeof all === 'boolean' && all ? arr : arr[0];
@@ -306,7 +304,7 @@ module.exports = function (issuemd) {
     function collectionUpdate(collection, input /*...*/ ) {
 
         if (utils.type(input) !== 'array') {
-            input = [].slice.call(arguments);
+            input = [].slice.call(arguments, 1);
         }
 
         var updates = [];
@@ -376,7 +374,7 @@ module.exports = function (issuemd) {
     function collectionRemove(collection, input) {
 
         // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
-        input = utils.type(input) === 'array' ? input : [].slice.call(arguments);
+        input = utils.type(input) === 'array' ? input : [].slice.call(arguments, 1);
 
         // sort and reverse input so that elements are removed from back, and don't change position of next one to remove
         input.sort().reverse();

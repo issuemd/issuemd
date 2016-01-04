@@ -36,7 +36,7 @@ META_MODIFIED = META_START 'modified' META_SEPARATOR value:META_VALUE { return v
 META_MODIFIER = META_START 'modifier' META_SEPARATOR value:META_VALUE { return value }
 META_ITEM = META_START label:META_LABEL META_SEPARATOR value:META_VALUE { return { key: label, value: value } }
 META_START = NEWLINE '+' SPACE+
-META_LABEL = ALPHAS
+META_LABEL = KEYWORD
 META_SEPARATOR = ':' WHITESPACE
 META_VALUE = value:TO_EOL* { return value.join('') }
 
@@ -59,7 +59,7 @@ UPDATE_DELIMITER = '---'
 DELIMITER = NEWLINE EOF / DIVIDER (UPDATE_DELIMITER META_ITEM / TITLE META_ITEM)
 TO_EOL = !NEWLINE char:. { return char }
 TO_DELIMITER = content:(!DELIMITER char:. { return char })* { return content.join('') }
-ALPHAS = chars:[a-zA-Z]+ { return chars.join('') } 
+KEYWORD = start:[a-zA-Z] rest:[a-zA-Z0-9_-]* { return start + rest.join('') }
 DIVIDER = NEWLINE NEWLINE
 
 NEWLINE =  '\r\n' / '\r' / '\n'

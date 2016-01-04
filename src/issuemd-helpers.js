@@ -18,7 +18,7 @@ module.exports = function (utils) {
 
     function issueJsonToLoose(issue) {
 
-        var out = (issue || {}).original || {};
+        var out = (utils.copy(issue) || {}).original || {};
 
         utils.each(out.meta, function (meta) {
             out[meta.key] = meta.value;
