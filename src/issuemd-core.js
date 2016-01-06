@@ -1,18 +1,27 @@
-'use strict';
+(function (root, factory) {
 
-! function () {
+    'use strict';
 
-    // only for jshint
-    var self = self || {};
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([], function () {
+            return (root.returnExportsGlobal = factory(root));
+        });
+    } else if (typeof exports === 'object') {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory(root);
+    } else {
+        // Browser globals
+        root.returnExportsGlobal = factory(root);
+    }
 
-    // defining root, underscore's style 
-    var root = typeof self === 'object' && self.self === self && self ||
-        typeof global === 'object' && global.global === global && global ||
-        this;
+}(typeof window !== 'undefined' ? window : this, function (root) {
 
-    // root should be Window when loaded in browser, but it isn't. 
-    // but, it does exist outside this anonymus function
-    var _issuemd = root ? root.issuemd : undefined;
+    'use strict';
+
+    var _issuemd = this ? this.issuemd : undefined;
 
     var issuemd = function () {
         return issuemd.fn.main.apply(null, arguments);
@@ -23,30 +32,12 @@
     issuemd.fn = require('./issuemd-methods.js')(issuemd);
 
     issuemd.noConflict = function () {
-        // same error as when caching existing issuemd in _issuemd variable, root is undefined which it shouldn't be
-        if (root) {
+        if (root && root.issuemd === issuemd) {
             root.issuemd = _issuemd;
         }
         return this;
     };
 
-    /***************************************
-     * hook module into AMD/require etc... *
-     ***************************************/
+    return issuemd;
 
-    if (typeof exports !== 'undefined' && !exports.nodeType) {
-        if (typeof module !== 'undefined' && !module.nodeType && module.exports) {
-            module.exports = issuemd;
-        }
-        exports.issuemd = issuemd;
-    } else {
-        root.issuemd = issuemd;
-    }
-
-    if (typeof define === 'function' && define.amd) {
-        define('underscore', [], function () {
-            return issuemd;
-        });
-    }
-
-}();
+}));
