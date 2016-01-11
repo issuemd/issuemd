@@ -41,6 +41,7 @@
       "./parser/issuemd-parser-builder.js": "./issuemd-parser.min.js"
     }
   },
+  "tonicExampleFilename": ".tonic.js",
   "dependencies": {},
   "devDependencies": {
     "aliasify": "^1.8.0",
