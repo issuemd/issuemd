@@ -322,7 +322,7 @@ module.exports = (function () {
     function collectionEq(collection, index) {
 
         var newCollection = createCollection([]);
-        newCollection.push(utils.copy(collection[index]));
+        newCollection.push(collection[index]);
         return newCollection;
 
     }
