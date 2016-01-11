@@ -1,8 +1,8 @@
 {
   "name": "issuemd",
-  "version": "0.0.0-develop",
+  "version": "0.0.0",
   "description": "issue tracking in hand",
-  "main": "src/issuemd",
+  "main": "issuemd.min.js",
   "scripts": {
     "start": "npm run format && npm run lint && npm run test:cover && npm run build",
     "format": "bash -c \"js-beautify -f src/*.js src/*/*.js test/*.js -r\"",
