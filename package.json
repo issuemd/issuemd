@@ -1,6 +1,6 @@
 {
   "name": "issuemd",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "issue tracking in hand",
   "main": "issuemd.min.js",
   "scripts": {
@@ -41,6 +41,7 @@
       "./parser/issuemd-parser-builder.js": "./issuemd-parser.min.js"
     }
   },
+  "tonicExampleFilename": ".tonic.js",
   "dependencies": {},
   "devDependencies": {
     "aliasify": "^1.8.0",
