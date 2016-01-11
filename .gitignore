@@ -1,4 +1,6 @@
 /.issuerc
+/issuemd.min.js
+/issuemd-parser.min.js
 
 /misc/
 /build/

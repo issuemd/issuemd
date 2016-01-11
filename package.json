@@ -1,8 +1,8 @@
 {
   "name": "issuemd",
-  "version": "0.0.0-alpha3",
+  "version": "0.0.0-develop",
   "description": "issue tracking in hand",
-  "main": "issuemd.min.js",
+  "main": "src/issuemd",
   "scripts": {
     "start": "npm run format && npm run lint && npm run test:cover && npm run build",
     "format": "bash -c \"js-beautify -f src/*.js src/*/*.js test/*.js -r\"",
@@ -41,10 +41,7 @@
       "./parser/issuemd-parser-builder.js": "./issuemd-parser.min.js"
     }
   },
-  "dependencies": {
-    "marked": "^0.3.2",
-    "mustache": "^2.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "aliasify": "^1.8.0",
     "blueimp-md5": "^2.1.0",
@@ -55,7 +52,9 @@
     "istanbul": "^0.4.1",
     "js-beautify": "^1.5.10",
     "jshint": "^2.9.1-rc1",
+    "marked": "^0.3.2",
     "minijasminenode": "1.1.1",
+    "mustache": "^2.2.0",
     "pegjs": "^0.9.0",
     "uglify-js": "^2.6.1",
     "updtr": "^0.1.5"
