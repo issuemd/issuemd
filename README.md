@@ -180,7 +180,7 @@ Now lets see what that looks like in markdown format, ready for disk storage...
 
 ... or as HTML ...
     
-    issues.md()
+    issues.html()
     /* ->
     <div class='issue'>
     <div class='original'>
