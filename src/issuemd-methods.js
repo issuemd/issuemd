@@ -373,7 +373,7 @@ module.exports = (function () {
     function issuemdMerger(left, right) {
 
         // inspired by: http://stackoverflow.com/a/6713782/665261
-        function objectsEqual(x, y) {
+        function objectsEqual(x, y) { // jshint maxcomplexity:15
             if (x === y) {
                 return true;
             }
