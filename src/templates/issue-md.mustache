@@ -1,5 +1,4 @@
 {{! use triple `{`s for title/value/body to retain special characters }}
-{{! why do I need two newlines inserted before the `---` when there is one already trailing the `body`? }}
 {{#.}}{{#original}}
 ## {{{title}}}
 + created: {{created}}
@@ -19,4 +18,6 @@
 {{/meta}}
 {{#body}}
 
-{{{.}}}{{/body}}{{/updates}}{{/.}}
+{{{.}}}{{/body}}{{/updates}}
+
+{{/.}}

@@ -1,6 +1,6 @@
 COLLECTION = issues:ISSUE* { return issues }
 
-ISSUE = title:TITLE original:ISSUE_META body:BODY? updates:UPDATE* NEWLINE* {
+ISSUE = title:TITLE original:ISSUE_META body:BODY? updates:UPDATE* DIVIDER {
   original.title = title
   original.body = body || ''
   return { original: original, updates: updates }
@@ -22,10 +22,11 @@ ISSUE_META = created:META_CREATED creator:META_CREATOR meta:META_ITEM* {
   }
 }
 
-UPDATE_META = modified:META_MODIFIED modifier:META_MODIFIER meta:META_ITEM* {
+UPDATE_META = modified:META_MODIFIED modifier:META_MODIFIER type:META_TYPE meta:META_ITEM* {
   return {
     modified: modified,
     modifier: modifier,
+    type: type,
     meta: meta
   }
 }
@@ -34,6 +35,7 @@ META_CREATED = META_START 'created' META_SEPARATOR value:META_VALUE { return val
 META_CREATOR = META_START 'creator' META_SEPARATOR value:META_VALUE { return value }
 META_MODIFIED = META_START 'modified' META_SEPARATOR value:META_VALUE { return value }
 META_MODIFIER = META_START 'modifier' META_SEPARATOR value:META_VALUE { return value }
+META_TYPE = META_START 'type' META_SEPARATOR value:META_VALUE { return value }
 META_ITEM = META_START label:META_LABEL META_SEPARATOR value:META_VALUE { return { key: label, value: value } }
 META_START = NEWLINE '+' SPACE+
 META_LABEL = KEYWORD
@@ -56,7 +58,7 @@ UPDATE_DELIMITER = '---'
 /* GENERAL TOKEN DEFINITIONS */
 
 // could be delimited by another issue, but then parse errors get eaten by issue body
-DELIMITER = NEWLINE EOF / DIVIDER (UPDATE_DELIMITER META_ITEM / TITLE META_ITEM)
+DELIMITER = DIVIDER (EOF / UPDATE_DELIMITER META_ITEM / TITLE META_ITEM)
 TO_EOL = !NEWLINE char:. { return char }
 TO_DELIMITER = content:(!DELIMITER char:. { return char })* { return content.join('') }
 KEYWORD = start:[a-zA-Z] rest:[a-zA-Z0-9_-]* { return start + rest.join('') }

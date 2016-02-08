@@ -1,28 +1,25 @@
 {{#data}}
-+-{{#util.pad}}-{{/util.pad                                                       }}-+
++-{{#util.pad}}-{{/util.pad                                                                        }}-+
 {{#title}}
-| {{#util.body}}{{{.}}}{{/util.body                                               }} |
+| {{#util.body}}{{{.}}}{{/util.body                                                                }} |
 {{/title}}
-+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+
-| {{#util.key}}created{{/util.key  }} | {{#util.value}}{{{created}}}{{/util.value }} |
-| {{#util.key}}creator{{/util.key  }} | {{#util.value}}{{{creator}}}{{/util.value }} |
++-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright                        }}-+
+| {{#util.key}}signature{{/util.key}} | {{#util.value}}{{{creator}}} @ {{{created}}}{{/util.value  }} |
 {{#meta}}
-| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.value}}{{{value}}}{{/util.value   }} |
+| {{#util.key}}{{{key}}}{{/util.key}} | {{#util.value}}{{{value}}}{{/util.value                    }} |
 {{/meta}}
-| {{#util.pad}} {{/util.pad                                                       }} |
+| {{#util.pad}} {{/util.pad                                                                        }} |
 {{#body}}
-| {{#util.body}}{{{.}}}{{/util.body                                               }} |
+| {{#util.body}}{{{.}}}{{/util.body                                                                }} |
 {{/body}}
 {{#comments}}
-| {{#util.pad}} {{/util.pad                                                       }} |
-+-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright       }}-+
-| {{#util.key}}type{{/util.key     }} | {{#util.value}}{{{type}}}{{/util.value    }} |
-| {{#util.key}}modified{{/util.key }} | {{#util.value}}{{{modified}}}{{/util.value}} |
-| {{#util.key}}modifier{{/util.key }} | {{#util.value}}{{{modifier}}}{{/util.value}} |
-| {{#util.pad}} {{/util.pad                                                       }} |
+| {{#util.pad}} {{/util.pad                                                                        }} |
++-{{#util.padleft}}-{{/util.padleft}}-+-{{#util.padright}}-{{/util.padright                        }}-+
+| {{#util.key}}{{type}}{{/util.key }} | {{#util.value}}{{{modifier}}} @ {{{modified}}}{{/util.value}} |
+| {{#util.pad}} {{/util.pad                                                                        }} |
 {{#body}}
-| {{#util.body}}{{{.}}}{{/util.body                                               }} |
+| {{#util.body}}{{{.}}}{{/util.body                                                                }} |
 {{/body}}
 {{/comments}}
-+-{{#util.pad}}-{{/util.pad                                                       }}-+
++-{{#util.pad}}-{{/util.pad                                                                        }}-+
 {{/data}}
