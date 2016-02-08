@@ -93,7 +93,7 @@ module.exports = (function () {
     }
 
     function dateString(inputDate) {
-        return inputDate.toISOString().replace('T', ' ').slice(0, 19);
+        return inputDate.toISOString().replace(/Z$/, '+0000');
     }
 
     // return firstbits hash of input, optionally specify `size` which defaults to 32

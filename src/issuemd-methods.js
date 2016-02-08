@@ -30,6 +30,7 @@ module.exports = (function () {
         hash: collectionHash,
         update: collectionUpdate,
         // util methods
+        updates: collectionUpdates,
         comments: collectionComments,
         clone: collectionClone,
         remove: collectionRemove,
@@ -268,6 +269,16 @@ module.exports = (function () {
 
     function collectionComments(collection) {
 
+        return utils.reduce(collectionUpdates(collection), function (memo, update) {
+            if (update.type === 'comment') {
+                memo.push(update);
+            }
+            return memo;
+        }, []);
+
+    }
+
+    function collectionUpdates(collection) {
         if (collection[0]) {
 
             var out = [];
@@ -373,7 +384,7 @@ module.exports = (function () {
     function issuemdMerger(left, right) {
 
         // inspired by: http://stackoverflow.com/a/6713782/665261
-        function objectsEqual(x, y) {
+        function objectsEqual(x, y) { // jshint maxcomplexity:15
             if (x === y) {
                 return true;
             }
