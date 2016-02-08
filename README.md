@@ -29,14 +29,14 @@ The easiest way to create an issue, is to call issuemd, passing an object hash r
     JSON.stringify(issues);
     /* ->
     [{
-        original: {
-            title: 'my funky issue',
-            creator: 'some guy',
-            created: '2015-12-14 23:36:20',
-            meta: [],
-            body: 'some issue-tastic problem'
+        "original": {
+            "title": "my funky issue",
+            "creator": "some guy",
+            "created": "2016-02-08T19:48:51.621+0000",
+            "meta": [],
+            "body": "some issue-tastic problem"
         },
-        updates: []
+        "updates": []
     }]
     */
 
@@ -47,7 +47,7 @@ The original part of an issue has a meta array, which is used for storing unknow
 ... with a single argument string, the attribute's current value is returned ...
 
     issues.attr('title');
-    // -> 'my funky issue'
+    // -> "my funky issue"
 
 ... with two argument strings, or an arguments array, issue attribute values are set. If it is one of the main attributes (title/created/creator/body) it will be set on the `original` object directly, otherwise it will be added to the `original.meta` array. This structure is useful for templating, where traversing object keys is more tricky than iterating arrays.
 
@@ -56,12 +56,12 @@ The original part of an issue has a meta array, which is used for storing unknow
     /* ->
     [{
         "original": {
-            "title": "My super issue!",
+            "title": "my funky issue",
             "creator": "The Man",
-            "created": "2015-12-14 23:36:20",
+            "created": "2016-02-08T19:48:51.621+0000",
             "meta": [{
                 "key": "priority",
-                "val": "high"
+                "value": "high"
             }],
             "body": "some issue-tastic problem"
         },
@@ -76,29 +76,29 @@ Updates are similar to the original object, but take slightly different attribut
     /* ->
     [{
         "original": {
-            "title": "My super issue!",
+            "title": "my funky issue",
             "creator": "The Man",
-            "created": "2015-12-14 23:36:20",
+            "created": "2016-02-08T19:48:51.621+0000",
             "meta": [{
                 "key": "priority",
-                "val": "high"
+                "value": "high"
             }],
             "body": "some issue-tastic problem"
         },
         "updates": [{
             "meta": [{
                 "key": "priority",
-                "val": "low"
+                "value": "low"
             }],
             "type": "edit",
             "modifier": "Another guy",
-            "modified": "2015-12-15 00:01:54"
+            "modified": "2016-02-08T19:53:23.503+0000"
         }, {
             "meta": [],
             "type": "comment",
             "modifier": "Another guy",
             "body": "lets not spend too much time on this right now",
-            "modified": "2015-12-15 00:04:09"
+            "modified": "2016-02-08T19:53:23.503+0000"
         }]
     }]
     */
@@ -109,38 +109,38 @@ In this case, Another guy has changed the priority to low, and then added a comm
     /* ->
     [{
         "original": {
-            "title": "My super issue!",
+            "title": "my funky issue",
             "creator": "The Man",
-            "created": "2015-12-14 23:36:20",
+            "created": "2016-02-08T19:48:51.621+0000",
             "meta": [{
                 "key": "priority",
-                "val": "high"
+                "value": "high"
             }],
             "body": "some issue-tastic problem"
         },
         "updates": [{
             "meta": [{
                 "key": "priority",
-                "val": "low"
+                "value": "low"
             }],
             "type": "edit",
             "modifier": "Another guy",
-            "modified": "2015-12-15 00:01:54"
+            "modified": "2016-02-08T19:53:23.503+0000"
         }, {
             "meta": [],
             "type": "comment",
             "modifier": "Another guy",
             "body": "lets not spend too much time on this right now",
-            "modified": "2015-12-15 00:04:09"
+            "modified": "2016-02-08T19:53:23.503+0000"
         }, {
             "meta": [{
                 "key": "priority",
-                "val": "high"
+                "value": "high"
             }],
             "type": "comment",
             "modifier": "The Man",
             "body": "actually, I think this is the top priority to work on immediately",
-            "modified": "2015-12-15 00:09:00"
+            "modified": "2016-02-08T19:55:36.624+0000"
         }]
     }]
     */
@@ -149,121 +149,118 @@ Now lets see what that looks like in markdown format, ready for disk storage...
 
     issues.md()
     /* ->
-    ## My super issue!
-    + created: 2015-12-14 23:36:20
+    ## my funky issue
+    + created: 2016-02-08T19:48:51.621+0000
     + creator: The Man
     + priority: high
-
+    
     some issue-tastic problem
-
+    
     ---
+    + modified: 2016-02-08T19:53:23.503+0000
+    + modifier: Another guy
     + type: edit
-    + modified: 2015-12-15 00:01:54
-    + modifier: Another guy
     + priority: low
-
+    
+    
     ---
-    + type: comment
-    + modified: 2015-12-15 00:04:09
+    + modified: 2016-02-08T19:53:23.503+0000
     + modifier: Another guy
-
-    lets not spend too much time on this right now
-
-    ---
     + type: comment
-    + modified: 2015-12-15 00:09:00
+    
+    lets not spend too much time on this right now
+    
+    ---
+    + modified: 2016-02-08T19:55:36.624+0000
     + modifier: The Man
+    + type: comment
     + priority: high
-
+    
     actually, I think this is the top priority to work on immediately
+    
+    
     */
 
 ... or as HTML ...
     
     issues.html()
     /* ->
-    <div class='issue'>
-    <div class='original'>
-      <div class='head'>
-        <h2>My super issue!</h2>
-        <ul class='original-attr'>
-          <li><b>creator:</b> The Man</li>
-          <li><b>created:</b> 2015-12-15 00:37:02</li>
-          <li><b>priority:</b> high</li>
-        </ul>
+    <div class="issue">
+      <div class="original">
+        <div class="head">
+          <h2>my funky issue</h2>
+          <ul class="original-attr">
+            <li><b>creator:</b> The Man</li>
+            <li><b>created:</b> 2016-02-08T19:48:51.621+0000</li>
+            <li><b>priority:</b> high</li>
+          </ul>
+        </div>
+        <div class="body">
+          <p>some issue-tastic problem</p>
+        </div>
       </div>
-      <div class='body'>
-        <p>some issue-tastic problem</p>
-      </div>
-    </div>
-    <div class='updates'>
-      <hr class='update-divider'>
-      <div class='update'>
-      <ul class='update-attr'>
-        <li><b>type:</b> edit</li>
-        <li><b>modified:</b> 2015-12-15 00:37:02</li>
-        <li><b>modifier:</b> Another guy</li>
-        <li><b>priority:</b> low</li>  </ul>
-      <div class='update-body'>
+      <div class="updates">
+        <hr class="update-divider">
+        <div class="update">
+          <ul class="update-attr">
+            <li><b>type:</b> edit</li>
+            <li><b>modified:</b> 2016-02-08T19:53:23.503+0000</li>
+            <li><b>modifier:</b> Another guy</li>
+            <li><b>priority:</b> low</li>
+          </ul>
+          <div class="update-body">
           </div>
+        </div>
+        <hr class="update-divider">
+        <div class="update">
+          <ul class="update-attr">
+            <li><b>type:</b> comment</li>
+            <li><b>modified:</b> 2016-02-08T19:53:23.503+0000</li>
+            <li><b>modifier:</b> Another guy</li>
+          </ul>
+          <div class="update-body">
+            <p>lets not spend too much time on this right now</p>
+          </div>
+        </div>
+        <hr class="update-divider">
+        <div class="update">
+          <ul class="update-attr">
+            <li><b>type:</b> comment</li>
+            <li><b>modified:</b> 2016-02-08T19:55:36.624+0000</li>
+            <li><b>modifier:</b> The Man</li>
+            <li><b>priority:</b> high</li>
+          </ul>
+          <div class="update-body">
+            <p>actually, I think this is the top priority to work on immediately</p>
+          </div>
+        </div>
       </div>
-    <div class='updates'>
-      <hr class='update-divider'>
-      <div class='update'>
-      <ul class='update-attr'>
-        <li><b>type:</b> comment</li>
-        <li><b>modified:</b> 2015-12-15 00:37:03</li>
-        <li><b>modifier:</b> Another guy</li>
-      </ul>
-      <div class='update-body'>
-        <p>lets not spend too much time on this right now</p>
-      </div>
-      </div>
-    <div class='updates'>
-      <hr class='update-divider'>
-      <div class='update'>
-      <ul class='update-attr'>
-        <li><b>type:</b> comment</li>
-        <li><b>modified:</b> 2015-12-15 00:37:03</li>
-        <li><b>modifier:</b> The Man</li>
-        <li><b>priority:</b> high</li>  </ul>
-      <div class='update-body'>
-        <p>actually, I think this is the top priority to work on immediately</p>
-      </div>
-      </div>
-    </div>
     </div>
     */
 
 ... or as a table formatted string (with optional width in characters specified, defaults to 80)
 
-    issues.toString(40);
+    issues.toString(60);
     /* ->
-    +--------------------------------------+
-    | My super issue!                      |
-    +-----------+--------------------------+
-    | created   | 2015-12-15 00:37:02      |
-    | creator   | The Man                  |
-    | priority  | high                     |
-    |                                      |
-    | some issue-tastic problem            |
-    |                                      |
-    +-----------+--------------------------+
-    | type      | comment                  |
-    | modified  | 2015-12-15 00:37:03      |
-    | modifier  | Another guy              |
-    |                                      |
-    | lets not spend too much time on this |
-    | right now                            |
-    |                                      |
-    +-----------+--------------------------+
-    | type      | comment                  |
-    | modified  | 2015-12-15 00:37:03      |
-    | modifier  | The Man                  |
-    |                                      |
-    | actually, I think this is the top    |
-    | priority to work on immediately      |
-    +--------------------------------------+
+    +----------------------------------------------------------+
+    | my funky issue                                           |
+    +-----------+----------------------------------------------+
+    | signature | The Man @ 2016-02-08T19:48:51.621+0000       |
+    | priority  | high                                         |
+    |                                                          |
+    | some issue-tastic problem                                |
+    |                                                          |
+    +-----------+----------------------------------------------+
+    | comment   | Another guy @ 2016-02-08T19:53:23.503+0000   |
+    |                                                          |
+    | lets not spend too much time on this right now           |
+    |                                                          |
+    +-----------+----------------------------------------------+
+    | comment   | The Man @ 2016-02-08T19:55:36.624+0000       |
+    |                                                          |
+    | actually, I think this is the top priority to work on    |
+    | immediately                                              |
+    +----------------------------------------------------------+
     */
 
 It is surprisingly useful to be able to search issues with text editors, and cli tools without having to rely on complex client/server system search facilities.
