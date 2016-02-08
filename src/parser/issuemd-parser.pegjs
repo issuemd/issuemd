@@ -1,6 +1,6 @@
 COLLECTION = issues:ISSUE* { return issues }
 
-ISSUE = title:TITLE original:ISSUE_META body:BODY? updates:UPDATE* NEWLINE* {
+ISSUE = title:TITLE original:ISSUE_META body:BODY? updates:UPDATE* DIVIDER {
   original.title = title
   original.body = body || ''
   return { original: original, updates: updates }
@@ -58,7 +58,7 @@ UPDATE_DELIMITER = '---'
 /* GENERAL TOKEN DEFINITIONS */
 
 // could be delimited by another issue, but then parse errors get eaten by issue body
-DELIMITER = NEWLINE EOF / DIVIDER (UPDATE_DELIMITER META_ITEM / TITLE META_ITEM)
+DELIMITER = DIVIDER (EOF / UPDATE_DELIMITER META_ITEM / TITLE META_ITEM)
 TO_EOL = !NEWLINE char:. { return char }
 TO_DELIMITER = content:(!DELIMITER char:. { return char })* { return content.join('') }
 KEYWORD = start:[a-zA-Z] rest:[a-zA-Z0-9_-]* { return start + rest.join('') }

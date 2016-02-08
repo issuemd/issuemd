@@ -20,7 +20,9 @@ module.exports = function () {
             '+ created: 2012-03-04T10:22:03.000+0000',
             '+ creator: Some Guy',
             '',
-            'Just a simple issue'
+            'Just a simple issue',
+            '',
+            ''
         ].join('\n'),
 
         simpleIssueJson: JSON.stringify({
@@ -40,7 +42,9 @@ module.exports = function () {
             '+ creator: Some Guy',
             '+ labels: important, easy',
             '',
-            'Just a simple issue with meta'
+            'Just a simple issue with meta',
+            '',
+            ''
         ].join('\n'),
 
         simpleIssueWithMetaJson: JSON.stringify({
@@ -63,7 +67,9 @@ module.exports = function () {
             '+    creator: Some Guy',
             '+ labels: important, easy',
             '',
-            'Just a simple issue with meta'
+            'Just a simple issue with meta',
+            '',
+            ''
         ].join('\n'),
 
         issueWithComments: [
@@ -85,7 +91,9 @@ module.exports = function () {
             '+ modifier: Some Other Guy',
             '+ type: comment',
             '',
-            'Some Other Guy says...'
+            'Some Other Guy says...',
+            '',
+            ''
         ].join('\n'),
 
         issueWithCommentsJson: JSON.stringify({
