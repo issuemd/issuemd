@@ -1,6 +1,6 @@
 {
   "name": "issuemd",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "issue tracking in hand",
   "main": "issuemd.min.js",
   "scripts": {

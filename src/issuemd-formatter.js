@@ -128,7 +128,7 @@ module.exports = (function () {
 
                 });
 
-                utils.each(issue.comments(), function (value) {
+                utils.each(issue.updates(), function (value) {
 
                     value.body = splitLines(value.body);
                     data.comments.push(value);

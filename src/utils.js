@@ -10,7 +10,9 @@ module.exports = (function () {
         objectKeys: utilsObjectKeys,
         trim: utilsTrim,
         extend: utilsExtend,
-        wordwrap: utilsWordwrap
+        wordwrap: utilsWordwrap,
+        map: utilsMap,
+        reduce: utilsReduce
     };
 
     // return last argument if it is of targetType, otherwise return null
@@ -145,5 +147,14 @@ module.exports = (function () {
         return result.join('\n');
 
     }
+
+    // adapted from:
+    //     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Map#Polyfill
+    // ... and ...
+    //     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce#Polyfill
+    /* beautify preserve:start */
+    function utilsMap(a,b,c){var d,e,f;if(null==a)throw new TypeError(" this is null or not defined");var g=Object(a),h=g.length>>>0;if("function"!=typeof b)throw new TypeError(b+" is not a function");for(arguments.length>1&&(d=c),e=new Array(h),f=0;h>f;){var i,j;f in g&&(i=g[f],j=b.call(d,i,f,g),e[f]=j),f++}return e} // jshint ignore:line
+    function utilsReduce(a,b){if(null==a)throw new TypeError("Array.prototype.reduce called on null or undefined");if("function"!=typeof b)throw new TypeError(b+" is not a function");var f,c=Object(a),d=c.length>>>0,e=0;if(3==arguments.length)f=arguments[2];else{for(;d>e&&!(e in c);)e++;if(e>=d)throw new TypeError("Reduce of empty array with no initial value");f=c[e++]}for(;d>e;e++)e in c&&(f=b(f,c[e],e,c));return f} // jshint ignore:line
+    /* beautify preserve:end */
 
 }());
