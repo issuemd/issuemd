@@ -31,7 +31,7 @@ module.exports = (function () {
 
     };
 
-    function json2summaryTable(issueJSObject, cols, templateOverride) {
+    function json2summaryTable(issueJSObject, cols, templateOverride, colorisationFunctions) {
 
         cols = cols || 80;
 
@@ -54,13 +54,13 @@ module.exports = (function () {
         var template = templateOverride ? templateOverride : fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8');
 
         return renderMustache(template, {
-            util: getFormatterUtils(0, cols),
+            util: getFormatterUtils(0, cols, colorisationFunctions),
             data: data
         });
 
     }
 
-    function json2string(issueJSObject, cols, templateOverride) {
+    function json2string(issueJSObject, cols, templateOverride, colorisationFunctions) {
 
         cols = cols || 80;
 
@@ -136,7 +136,7 @@ module.exports = (function () {
                 });
 
                 out.push(renderMustache(template, {
-                    util: getFormatterUtils(widest, cols),
+                    util: getFormatterUtils(widest, cols, colorisationFunctions),
                     data: data
                 }));
 
@@ -147,9 +147,13 @@ module.exports = (function () {
 
     }
 
-    function getFormatterUtils(widest, cols) {
+    function getFormatterUtils(widest, cols, colorisationFunctions) {
 
         cols = cols || 80;
+
+        function renderEcho(val, render) {
+            return render(val);
+        }
 
         return {
             body: body,
@@ -160,7 +164,22 @@ module.exports = (function () {
             pad12: pad12,
             padleft: padleft,
             padright: padright,
-            curtailed: curtailed
+            curtailed: curtailed,
+            bkey: function () {
+                return colorisationFunctions && colorisationFunctions.bkey || renderEcho;
+            },
+            bsep: function () {
+                return colorisationFunctions && colorisationFunctions.bsep || renderEcho;
+            },
+            htext: function () {
+                return colorisationFunctions && colorisationFunctions.htext || renderEcho;
+            },
+            hsep: function () {
+                return colorisationFunctions && colorisationFunctions.hsep || renderEcho;
+            },
+            btext: function () {
+                return colorisationFunctions && colorisationFunctions.btext || renderEcho;
+            }
         };
 
         function curtailed() {
@@ -298,13 +317,13 @@ module.exports = (function () {
 
     // requiring formatter/utils
 
-    function collectionToString(collection, cols, templateOverride) {
-        return issuemdFormatter.string(collection.toArray(), cols, templateOverride);
+    function collectionToString(collection, cols, templateOverride, colorisationFunctions) {
+        return issuemdFormatter.string(collection.toArray(), cols, templateOverride, colorisationFunctions);
     }
 
     // return string summary table of collection
-    function collectionSummary(collection, cols, templateOverride) {
-        return issuemdFormatter.summary(collection.toArray(), cols, templateOverride);
+    function collectionSummary(collection, cols, templateOverride, colorisationFunctions) {
+        return issuemdFormatter.summary(collection.toArray(), cols, templateOverride, colorisationFunctions);
     }
 
     function collectionMd(collection, input /*, options*/ ) {
