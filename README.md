@@ -1,5 +1,7 @@
 # issuemd - issue tracking in hand
 
+[![Build Status](https://travis-ci.org/issuemd/issuemd.svg?branch=master)](https://travis-ci.org/issuemd/issuemd) [![bitHound Overall Score](https://www.bithound.io/github/issuemd/issuemd/badges/score.svg)](https://www.bithound.io/github/issuemd/issuemd)
+
 ## Key concepts
 
 Issue data is the heart of the issuemd library.
