@@ -1,0 +1,9 @@
+install:
+  - npm i
+
+script:
+  - npm start
+
+branches:
+  only:
+    - master
