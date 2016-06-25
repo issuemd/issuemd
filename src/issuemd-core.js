@@ -2,7 +2,7 @@
 
 module.exports = (function () {
 
-    issuemd.version = '__VERSION__';
+    issuemd.version = 'v__VERSION__';
 
     issuemd.fn = Issuemd.prototype = {
 
