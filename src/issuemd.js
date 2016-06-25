@@ -41,6 +41,8 @@
         return this;
     };
 
+    issuemd.utils = utils;
+
     return issuemd;
 
 }));
