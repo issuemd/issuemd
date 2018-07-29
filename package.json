@@ -4,12 +4,10 @@
   "description": "issue tracking in hand",
   "main": "issuemd.min.js",
   "scripts": {
-    "start": "npm run format && npm run lint && npm run test:cover && npm run build",
+    "start": "npm run format && npm run lint && npm run test && npm run build",
     "format": "bash -c \"js-beautify -f src/*.js src/*/*.js test/*.js -r\"",
     "lint": "jshint src test",
-    "test": "bash -c \"minijasminenode --noStack --verbose test/*.unit.js\"",
-    "test:dist": "bash -c \"ENVIRONMENT=dist npm test\"",
-    "test:cover": "bash -c \"istanbul cover --print none --report none --dir reports/coverage -- node_modules/minijasminenode/bin/minijn --noStack --verbose test/*.unit.js\" && istanbul report --root reports/coverage text",
+    "test": "jest --coverage",
     "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd.js | uglifyjs -o issuemd.min.js",
     "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
     "update": "updtr"
@@ -42,7 +40,12 @@
     }
   },
   "tonicExampleFilename": ".tonic.js",
-  "dependencies": {},
+  "jest": {
+    "testURL": "http://localhost/",
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ]
+  },
   "devDependencies": {
     "aliasify": "^2.0.0",
     "blueimp-md5": "^2.1.0",
@@ -50,11 +53,10 @@
     "browserify": "^13.0.1",
     "browserify-versionify": "^1.0.6",
     "chance": "^1.0.3",
-    "istanbul": "^0.4.1",
+    "jest": "^23.4.2",
     "js-beautify": "^1.5.10",
     "jshint": "^2.9.1-rc1",
     "marked": "0.3.5",
-    "minijasminenode": "1.1.1",
     "mustache": "^2.2.0",
     "pegjs": "^0.9.0",
     "uglify-js": "^2.6.1",

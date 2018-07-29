@@ -2,7 +2,7 @@
 
 /misc/
 /build/
-/reports/
+/coverage/
 /issues/
 
 .DS_Store
