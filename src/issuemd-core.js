@@ -13,7 +13,9 @@ module.exports = (function() {
     push: [].push,
     sort: [].sort,
     splice: [].splice,
-    pop: [].pop
+    pop: [].pop,
+    shift: [].shift,
+    unshift: [].unshift
   }
 
   return issuemd
