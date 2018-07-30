@@ -1,13 +1,13 @@
-'use strict'
+'use strict';
 
-module.exports = (function () {
-  var fs = require('fs')
+module.exports = (function() {
+  var fs = require('fs');
 
-  var mustache = require('mustache')
-  var marked = require('marked')
+  var mustache = require('mustache');
+  var marked = require('marked');
 
-  var utils = require('./utils.js')
-  var methods = require('./issuemd-methods.js')
+  var utils = require('./utils.js');
+  var methods = require('./issuemd-methods.js');
 
   var issuemdFormatter = {
     render: {
@@ -18,25 +18,23 @@ module.exports = (function () {
     html: json2html,
     string: json2string,
     summary: json2summaryTable
-  }
+  };
 
   return {
-
     // formatter methods
     toString: collectionToString,
     summary: collectionSummary,
     md: collectionMd,
     html: collectionHtml
+  };
 
-  }
+  function json2summaryTable(issueJSObject, cols, templateOverride, colorisationFunctions) {
+    cols = cols || 80;
 
-  function json2summaryTable (issueJSObject, cols, templateOverride, colorisationFunctions) {
-    cols = cols || 80
+    var data = [];
 
-    var data = []
-
-    utils.each(methods.main(null, issueJSObject), function (issue) {
-      var attr = methods.attr(methods.main(null, issue))
+    utils.each(methods.main(null, issueJSObject), function(issue) {
+      var attr = methods.attr(methods.main(null, issue));
 
       data.push({
         title: attr.title,
@@ -44,93 +42,98 @@ module.exports = (function () {
         id: attr.id,
         assignee: attr.assignee,
         status: attr.status
-      })
-    })
+      });
+    });
 
     // TODO: if webpack build, drop the filename concat used by browserify (don't forget other instances in this file)
-    var template = templateOverride || fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = templateOverride || fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8'); // eslint-disable-line no-path-concat
 
     return renderMustache(template, {
       util: getFormatterUtils(0, cols, colorisationFunctions),
       data: data
-    })
+    });
   }
 
-  function json2string (issueJSObject, cols, templateOverride, colorisationFunctions) {
-    cols = cols || 80
+  function json2string(issueJSObject, cols, templateOverride, colorisationFunctions) {
+    cols = cols || 80;
 
-    var splitLines = function (input) {
-      var output = []
+    var splitLines = function(input) {
+      var output = [];
 
-      var lines = utils.wordwrap(input, (cols - 4)).replace(/\n\n+/, '\n\n').split('\n')
+      var lines = utils
+        .wordwrap(input, cols - 4)
+        .replace(/\n\n+/, '\n\n')
+        .split('\n');
 
-      utils.each(lines, function (item) {
-        if (item.length < (cols - 4)) {
-          output.push(item)
+      utils.each(lines, function(item) {
+        if (item.length < cols - 4) {
+          output.push(item);
         } else {
-          output = output.concat(item.match(new RegExp('.{1,' + (cols - 4) + '}', 'g')))
+          output = output.concat(item.match(new RegExp('.{1,' + (cols - 4) + '}', 'g')));
         }
-      })
+      });
 
-      return output
-    }
+      return output;
+    };
 
-    var template = templateOverride || fs.readFileSync(__dirname + '/templates/issue-string.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = templateOverride || fs.readFileSync(__dirname + '/templates/issue-string.mustache', 'utf8'); // eslint-disable-line no-path-concat
 
     if (issueJSObject) {
-      var out = []
-      var issues = methods.main(null, issueJSObject)
+      var out = [];
+      var issues = methods.main(null, issueJSObject);
 
-      utils.each(issues, function (issueJson) {
-        var issue = methods.main(null, issueJson)
+      utils.each(issues, function(issueJson) {
+        var issue = methods.main(null, issueJson);
         var data = {
           meta: [],
           comments: []
-        }
+        };
 
-        var widest = 'signature'.length
+        var widest = 'signature'.length;
 
-        utils.each(issue.attr(), function (value, key) {
+        utils.each(issue.attr(), function(value, key) {
           if (key === 'title' || key === 'body') {
-            data[key] = splitLines(value)
+            data[key] = splitLines(value);
           } else if (key === 'created' || key === 'creator') {
-            data[key] = value
+            data[key] = value;
 
             if (key.length > widest) {
-              widest = key.length
+              widest = key.length;
             }
           } else {
             data.meta.push({
               key: key,
               value: value
-            })
+            });
 
             if (key.length > widest) {
-              widest = key.length
+              widest = key.length;
             }
           }
-        })
+        });
 
-        utils.each(issue.updates(), function (value) {
-          value.body = splitLines(value.body)
-          data.comments.push(value)
-        })
+        utils.each(issue.updates(), function(value) {
+          value.body = splitLines(value.body);
+          data.comments.push(value);
+        });
 
-        out.push(renderMustache(template, {
-          util: getFormatterUtils(widest, cols, colorisationFunctions),
-          data: data
-        }))
-      })
+        out.push(
+          renderMustache(template, {
+            util: getFormatterUtils(widest, cols, colorisationFunctions),
+            data: data
+          })
+        );
+      });
 
-      return out.join('\n')
+      return out.join('\n');
     }
   }
 
-  function getFormatterUtils (widest, cols, colorisationFunctions) {
-    cols = cols || 80
+  function getFormatterUtils(widest, cols, colorisationFunctions) {
+    cols = cols || 80;
 
-    function renderEcho (val, render) {
-      return render(val)
+    function renderEcho(val, render) {
+      return render(val);
     }
 
     return {
@@ -143,151 +146,151 @@ module.exports = (function () {
       padleft: padleft,
       padright: padright,
       curtailed: curtailed,
-      bkey: function () {
-        return (colorisationFunctions && colorisationFunctions.bkey) || renderEcho
+      bkey: function() {
+        return (colorisationFunctions && colorisationFunctions.bkey) || renderEcho;
       },
-      bsep: function () {
-        return (colorisationFunctions && colorisationFunctions.bsep) || renderEcho
+      bsep: function() {
+        return (colorisationFunctions && colorisationFunctions.bsep) || renderEcho;
       },
-      htext: function () {
-        return (colorisationFunctions && colorisationFunctions.htext) || renderEcho
+      htext: function() {
+        return (colorisationFunctions && colorisationFunctions.htext) || renderEcho;
       },
-      hsep: function () {
-        return (colorisationFunctions && colorisationFunctions.hsep) || renderEcho
+      hsep: function() {
+        return (colorisationFunctions && colorisationFunctions.hsep) || renderEcho;
       },
-      btext: function () {
-        return (colorisationFunctions && colorisationFunctions.btext) || renderEcho
+      btext: function() {
+        return (colorisationFunctions && colorisationFunctions.btext) || renderEcho;
       }
+    };
+
+    function curtailed() {
+      return function(str, render) {
+        var content = render(str);
+        return curtail(content + repeat(' ', cols - 4 - content.length), cols - 4);
+      };
     }
 
-    function curtailed () {
-      return function (str, render) {
-        var content = render(str)
-        return curtail(content + repeat(' ', cols - 4 - content.length), cols - 4)
-      }
+    function body() {
+      return function(str, render) {
+        var content = render(str);
+        return content + repeat(' ', cols - 4 - content.length);
+      };
     }
 
-    function body () {
-      return function (str, render) {
-        var content = render(str)
-        return content + repeat(' ', cols - 4 - content.length)
-      }
+    function padleft() {
+      return function(str, render) {
+        return repeat(render(str), widest);
+      };
     }
 
-    function padleft () {
-      return function (str, render) {
-        return repeat(render(str), widest)
-      }
+    function padright() {
+      return function(str, render) {
+        return repeat(render(str), cols - widest - 7);
+      };
     }
 
-    function padright () {
-      return function (str, render) {
-        return repeat(render(str), cols - widest - 7)
-      }
+    function pad12() {
+      return function(str, render) {
+        return (render(str) + '            ').substr(0, 12);
+      };
     }
 
-    function pad12 () {
-      return function (str, render) {
-        return (render(str) + '            ').substr(0, 12)
-      }
+    function key() {
+      return function(str, render) {
+        var content = render(str);
+        return content + repeat(' ', widest - content.length);
+      };
     }
 
-    function key () {
-      return function (str, render) {
-        var content = render(str)
-        return content + repeat(' ', widest - content.length)
-      }
+    function value() {
+      return function(str, render) {
+        return render(str) + repeat(' ', cols - 7 - widest - render(str).length);
+      };
     }
 
-    function value () {
-      return function (str, render) {
-        return render(str) + repeat(' ', cols - 7 - widest - render(str).length)
-      }
+    function pad() {
+      return function(str, render) {
+        return repeat(render(str), cols - 4);
+      };
     }
 
-    function pad () {
-      return function (str, render) {
-        return repeat(render(str), cols - 4)
-      }
-    }
-
-    function pad6 () {
-      return function (str, render) {
-        return (render(str) + '      ').substr(0, 6)
-      }
+    function pad6() {
+      return function(str, render) {
+        return (render(str) + '      ').substr(0, 6);
+      };
     }
   }
 
-  function renderMarkdown (input) {
-    return marked(input)
+  function renderMarkdown(input) {
+    return marked(input);
   }
 
-  function renderMustache (template, data) {
-    return mustache.render(template, data)
+  function renderMustache(template, data) {
+    return mustache.render(template, data);
   }
 
-  function json2html (issueJSObject, options) {
-    var issues = utils.copy(issueJSObject)
+  function json2html(issueJSObject, options) {
+    var issues = utils.copy(issueJSObject);
 
-    utils.each(issues, function (issue) {
-      issue.original.body = issue.original.body ? marked(issue.original.body) : ''
+    utils.each(issues, function(issue) {
+      issue.original.body = issue.original.body ? marked(issue.original.body) : '';
 
-      utils.each(issue.updates, function (update) {
-        update.body = update.body ? marked(update.body) : ''
-      })
-    })
+      utils.each(issue.updates, function(update) {
+        update.body = update.body ? marked(update.body) : '';
+      });
+    });
 
-    var template = options.template || fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = options.template || fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8'); // eslint-disable-line no-path-concat
 
-    return renderMustache(template, issues)
+    return renderMustache(template, issues);
   }
 
-  function json2md (issueJSObject, options) {
-    var template = options.template || fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8') // eslint-disable-line no-path-concat
+  function json2md(issueJSObject, options) {
+    var template = options.template || fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8'); // eslint-disable-line no-path-concat
 
-    return renderMustache(template, issueJSObject)
+    return renderMustache(template, issueJSObject);
   }
 
-  function repeat (char, qty) {
-    var out = ''
+  function repeat(char, qty) {
+    var out = '';
 
     for (var i = 0; i < qty; i++) {
-      out += char
+      out += char;
     }
 
-    return out
+    return out;
   }
 
-  function curtail (input, width) {
-    return input.length > width ? input.slice(0, width - 3) + '...' : input
+  function curtail(input, width) {
+    return input.length > width ? input.slice(0, width - 3) + '...' : input;
   }
 
   /**********************
-     * collection methods *
-     **********************/
+   * collection methods *
+   **********************/
 
   // requiring formatter/utils
 
-  function collectionToString (collection, cols, templateOverride, colorisationFunctions) {
-    return issuemdFormatter.string(collection.toArray(), cols, templateOverride, colorisationFunctions)
+  function collectionToString(collection, cols, templateOverride, colorisationFunctions) {
+    return issuemdFormatter.string(collection.toArray(), cols, templateOverride, colorisationFunctions);
   }
 
   // return string summary table of collection
-  function collectionSummary (collection, cols, templateOverride, colorisationFunctions) {
-    return issuemdFormatter.summary(collection.toArray(), cols, templateOverride, colorisationFunctions)
+  function collectionSummary(collection, cols, templateOverride, colorisationFunctions) {
+    return issuemdFormatter.summary(collection.toArray(), cols, templateOverride, colorisationFunctions);
   }
 
-  function collectionMd (collection, input /*, options */) {
-    var options = utils.getLastArgument(arguments, 'object') || {}
+  function collectionMd(collection, input /*, options */) {
+    var options = utils.getLastArgument(arguments, 'object') || {};
 
     if (utils.type(input) === 'string') {
-      return collection.merge(input)
+      return collection.merge(input);
     } else if (options) {
-      return issuemdFormatter.md(collection.toArray(), options)
+      return issuemdFormatter.md(collection.toArray(), options);
     }
   }
 
-  function collectionHtml (collection, options) {
-    return issuemdFormatter.html(collection.toArray(), options || {})
+  function collectionHtml(collection, options) {
+    return issuemdFormatter.html(collection.toArray(), options || {});
   }
-})()
+})();
