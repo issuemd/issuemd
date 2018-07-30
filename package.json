@@ -4,9 +4,7 @@
   "description": "issue tracking in hand",
   "main": "issuemd.min.js",
   "scripts": {
-    "start": "npm run lint && npm run test && npm run build",
-    "lint": "standard",
-    "lint:fix": "standard --fix",
+    "start": "npm run test && npm run build",
     "test": "jest --coverage",
     "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd.js | uglifyjs -o issuemd.min.js",
     "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
@@ -60,7 +58,6 @@
     "pegjs": "^0.9.0",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
-    "standard": "^11.0.1",
     "uglify-js": "^2.6.1",
     "updtr": "^0.1.5"
   }

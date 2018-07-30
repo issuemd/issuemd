@@ -1,6 +1,6 @@
 # issuemd - issue tracking in hand
 
-[![Build Status](https://travis-ci.org/issuemd/issuemd.svg?branch=master)](https://travis-ci.org/issuemd/issuemd) [![bitHound Overall Score](https://www.bithound.io/github/issuemd/issuemd/badges/score.svg)](https://www.bithound.io/github/issuemd/issuemd)
+[![Build Status](https://travis-ci.org/issuemd/issuemd.svg?branch=master)](https://travis-ci.org/issuemd/issuemd)
 
 ## Key concepts
 
@@ -155,90 +155,91 @@ Now lets see what that looks like in markdown format, ready for disk storage...
     + created: 2016-02-08T19:48:51.621+0000
     + creator: The Man
     + priority: high
-    
+
     some issue-tastic problem
-    
+
     ---
     + modified: 2016-02-08T19:53:23.503+0000
     + modifier: Another guy
     + type: edit
     + priority: low
-    
-    
+
+
     ---
     + modified: 2016-02-08T19:53:23.503+0000
     + modifier: Another guy
     + type: comment
-    
+
     lets not spend too much time on this right now
-    
+
     ---
     + modified: 2016-02-08T19:55:36.624+0000
     + modifier: The Man
     + type: comment
     + priority: high
-    
+
     actually, I think this is the top priority to work on immediately
-    
-    
+
+
     */
 
 ... or as HTML ...
-    
-    issues.html()
-    /* ->
-    <div class="issue">
-      <div class="original">
-        <div class="head">
-          <h2>my funky issue</h2>
-          <ul class="original-attr">
-            <li><b>creator:</b> The Man</li>
-            <li><b>created:</b> 2016-02-08T19:48:51.621+0000</li>
-            <li><b>priority:</b> high</li>
-          </ul>
-        </div>
-        <div class="body">
-          <p>some issue-tastic problem</p>
-        </div>
-      </div>
-      <div class="updates">
-        <hr class="update-divider">
-        <div class="update">
-          <ul class="update-attr">
-            <li><b>type:</b> edit</li>
-            <li><b>modified:</b> 2016-02-08T19:53:23.503+0000</li>
-            <li><b>modifier:</b> Another guy</li>
-            <li><b>priority:</b> low</li>
-          </ul>
-          <div class="update-body">
-          </div>
-        </div>
-        <hr class="update-divider">
-        <div class="update">
-          <ul class="update-attr">
-            <li><b>type:</b> comment</li>
-            <li><b>modified:</b> 2016-02-08T19:53:23.503+0000</li>
-            <li><b>modifier:</b> Another guy</li>
-          </ul>
-          <div class="update-body">
-            <p>lets not spend too much time on this right now</p>
-          </div>
-        </div>
-        <hr class="update-divider">
-        <div class="update">
-          <ul class="update-attr">
-            <li><b>type:</b> comment</li>
-            <li><b>modified:</b> 2016-02-08T19:55:36.624+0000</li>
-            <li><b>modifier:</b> The Man</li>
-            <li><b>priority:</b> high</li>
-          </ul>
-          <div class="update-body">
-            <p>actually, I think this is the top priority to work on immediately</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    */
+
+issues.html()
+/\_ ->
+
+<div class="issue">
+<div class="original">
+<div class="head">
+<h2>my funky issue</h2>
+<ul class="original-attr">
+<li><b>creator:</b> The Man</li>
+<li><b>created:</b> 2016-02-08T19:48:51.621+0000</li>
+<li><b>priority:</b> high</li>
+</ul>
+</div>
+<div class="body">
+<p>some issue-tastic problem</p>
+</div>
+</div>
+<div class="updates">
+<hr class="update-divider">
+<div class="update">
+<ul class="update-attr">
+<li><b>type:</b> edit</li>
+<li><b>modified:</b> 2016-02-08T19:53:23.503+0000</li>
+<li><b>modifier:</b> Another guy</li>
+<li><b>priority:</b> low</li>
+</ul>
+<div class="update-body">
+</div>
+</div>
+<hr class="update-divider">
+<div class="update">
+<ul class="update-attr">
+<li><b>type:</b> comment</li>
+<li><b>modified:</b> 2016-02-08T19:53:23.503+0000</li>
+<li><b>modifier:</b> Another guy</li>
+</ul>
+<div class="update-body">
+<p>lets not spend too much time on this right now</p>
+</div>
+</div>
+<hr class="update-divider">
+<div class="update">
+<ul class="update-attr">
+<li><b>type:</b> comment</li>
+<li><b>modified:</b> 2016-02-08T19:55:36.624+0000</li>
+<li><b>modifier:</b> The Man</li>
+<li><b>priority:</b> high</li>
+</ul>
+<div class="update-body">
+<p>actually, I think this is the top priority to work on immediately</p>
+</div>
+</div>
+</div>
+</div>
+_/
 
 ... or as a table formatted string (with optional width in characters specified, defaults to 80)
 
@@ -266,4 +267,3 @@ Now lets see what that looks like in markdown format, ready for disk storage...
     */
 
 It is surprisingly useful to be able to search issues with text editors, and cli tools without having to rely on complex client/server system search facilities.
-
