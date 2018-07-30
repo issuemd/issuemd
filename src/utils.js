@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = (function () {
+module.exports = (function() {
   return {
     getLastArgument: utilsGetLastArgument,
     copy: utilsCopy,
@@ -15,26 +15,29 @@ module.exports = (function () {
   }
 
   // return last argument if it is of targetType, otherwise return null
-  function utilsGetLastArgument (args, targetType, defaultValue) {
+  function utilsGetLastArgument(args, targetType, defaultValue) {
     var last = args[args.length - 1]
     return utilsType(last) === targetType ? last : defaultValue || null
   }
 
-  function utilsCopy (input) {
+  function utilsCopy(input) {
     return JSON.parse(JSON.stringify(input))
   }
 
-  function utilsType (me) {
-    return Object.prototype.toString.call(me).split(/\W/)[2].toLowerCase()
+  function utilsType(me) {
+    return Object.prototype.toString
+      .call(me)
+      .split(/\W/)[2]
+      .toLowerCase()
   }
 
-  function utilsEach (obj, iteratee, context) {
+  function utilsEach(obj, iteratee, context) {
     if (obj === null || obj === undefined) {
       return obj
     }
 
     if (context !== void 0) {
-      iteratee = function (value, other) {
+      iteratee = function(value, other) {
         return iteratee.call(context, value, other)
       }
     }
@@ -61,7 +64,7 @@ module.exports = (function () {
     return obj
   }
 
-  function utilsObjectKeys (obj) {
+  function utilsObjectKeys(obj) {
     var keys = []
 
     for (var i in obj) {
@@ -73,11 +76,11 @@ module.exports = (function () {
     return keys
   }
 
-  function utilsTrim (string) {
+  function utilsTrim(string) {
     return (string + '').replace(/(^\s+|\s+$)/g, '')
   }
 
-  function utilsExtend (original, options) {
+  function utilsExtend(original, options) {
     for (var prop in options) {
       if (Object.prototype.hasOwnProperty.call(options, prop)) {
         original[prop] = options[prop]
@@ -88,10 +91,10 @@ module.exports = (function () {
   }
 
   // more full featured implementation: https://gist.github.com/billymoon/91db9ccada62028b50c7
-  function utilsWordwrap (str, intWidth) {
+  function utilsWordwrap(str, intWidth) {
     var result = []
 
-    utilsEach(str.split(/\r\n|\n|\r/), function (line) {
+    utilsEach(str.split(/\r\n|\n|\r/), function(line) {
       line = line.replace(/^\s\b/, '')
 
       var endPosition
@@ -129,7 +132,33 @@ module.exports = (function () {
   // ... and ...
   //     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce#Polyfill
   // eslint-disable-next-line
-  function utilsMap (a, b, c) { var d, e, f; if (a == null) throw new TypeError(' this is null or not defined'); var g = Object(a), h = g.length >>> 0; if (typeof b !== 'function') throw new TypeError(b + ' is not a function'); for (arguments.length > 1 && (d = c), e = new Array(h), f = 0; h > f;) { var i, j; f in g && (i = g[f], j = b.call(d, i, f, g), e[f] = j), f++ } return e } // jshint ignore:line
+  function utilsMap(a, b, c) {
+    var d, e, f
+    if (a == null) throw new TypeError(' this is null or not defined')
+    var g = Object(a),
+      h = g.length >>> 0
+    if (typeof b !== 'function') throw new TypeError(b + ' is not a function')
+    for (arguments.length > 1 && (d = c), e = new Array(h), f = 0; h > f; ) {
+      var i, j
+      f in g && ((i = g[f]), (j = b.call(d, i, f, g)), (e[f] = j)), f++
+    }
+    return e
+  } // jshint ignore:line
   // eslint-disable-next-line
-  function utilsReduce (a, b) { if (a == null) throw new TypeError('Array.prototype.reduce called on null or undefined'); if (typeof b !== 'function') throw new TypeError(b + ' is not a function'); var f, c = Object(a), d = c.length >>> 0, e = 0; if (arguments.length == 3)f = arguments[2]; else { for (;d > e && !(e in c);)e++; if (e >= d) throw new TypeError('Reduce of empty array with no initial value'); f = c[e++] } for (;d > e; e++)e in c && (f = b(f, c[e], e, c)); return f } // jshint ignore:line
-}())
+  function utilsReduce(a, b) {
+    if (a == null) throw new TypeError('Array.prototype.reduce called on null or undefined')
+    if (typeof b !== 'function') throw new TypeError(b + ' is not a function')
+    var f,
+      c = Object(a),
+      d = c.length >>> 0,
+      e = 0
+    if (arguments.length == 3) f = arguments[2]
+    else {
+      for (; d > e && !(e in c); ) e++
+      if (e >= d) throw new TypeError('Reduce of empty array with no initial value')
+      f = c[e++]
+    }
+    for (; d > e; e++) e in c && (f = b(f, c[e], e, c))
+    return f
+  } // jshint ignore:line
+})()

@@ -1,10 +1,9 @@
 'use strict'
 
-module.exports = (function () {
+module.exports = (function() {
   issuemd.version = 'v__VERSION__'
 
   issuemd.fn = Issuemd.prototype = {
-
     // don't use default object constructor so we can identify collections later on
     constructor: Issuemd,
 
@@ -15,15 +14,14 @@ module.exports = (function () {
     sort: [].sort,
     splice: [].splice,
     pop: [].pop
-
   }
 
   return issuemd
 
-  function issuemd () {
+  function issuemd() {
     return issuemd.fn.main.apply(null, arguments)
   }
 
   // main constructor function
-  function Issuemd () {}
+  function Issuemd() {}
 })()

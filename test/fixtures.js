@@ -1,6 +1,5 @@
-module.exports = (function () {
+module.exports = (function() {
   return {
-
     emptyString: '',
 
     timeString: '2015-06-27T19:42:56.000+0000',
@@ -53,10 +52,12 @@ module.exports = (function () {
         title: 'The issue title',
         created: '2012-03-04T10:22:03.000+0000',
         creator: 'Some Guy',
-        meta: [{
-          key: 'labels',
-          value: 'important, easy'
-        }],
+        meta: [
+          {
+            key: 'labels',
+            value: 'important, easy'
+          }
+        ],
         body: 'Just a simple issue with meta'
       },
       updates: []
@@ -105,20 +106,22 @@ module.exports = (function () {
         meta: [],
         body: 'Just a simple issue'
       },
-      updates: [{
-        modified: '2012-03-04T10:25:00.000+0000',
-        modifier: 'Some Guy',
-        type: 'comment',
-        meta: [],
-        body: 'Just a little comment'
-      }, {
-        modified: '2012-03-04T10:26:00.000+0000',
-        modifier: 'Some Other Guy',
-        type: 'comment',
-        meta: [],
-        body: 'Some Other Guy says...'
-      }]
+      updates: [
+        {
+          modified: '2012-03-04T10:25:00.000+0000',
+          modifier: 'Some Guy',
+          type: 'comment',
+          meta: [],
+          body: 'Just a little comment'
+        },
+        {
+          modified: '2012-03-04T10:26:00.000+0000',
+          modifier: 'Some Other Guy',
+          type: 'comment',
+          meta: [],
+          body: 'Some Other Guy says...'
+        }
+      ]
     })
-
   }
-}())
+})()

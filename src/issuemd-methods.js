@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = (function () {
+module.exports = (function() {
   var issuemd = require('./issuemd-core.js')
 
   // issuemd utils and helpers
@@ -11,7 +11,6 @@ module.exports = (function () {
   var issuemdParser = require('./parser/issuemd-parser-builder.js')
 
   return {
-
     // main antry point for library `issuemd.fn.main()` aliased to `issuemd()`
     main: collectionMain,
 
@@ -37,32 +36,31 @@ module.exports = (function () {
     eq: collectionEq,
     add: collectionAdd,
     sortUpdates: collectionSortUpdates
-
   }
 
   /**********************
-     * collection methods *
-     **********************/
+   * collection methods *
+   **********************/
 
   // methods to use as native overrides
   // ... also `function collectionToString` defined further down
 
-  function collectionConcat (collection, arr) {
+  function collectionConcat(collection, arr) {
     return createCollection(collection.toArray().concat(arr.toArray()))
   }
 
-  function collectionToArray (collection) {
+  function collectionToArray(collection) {
     return [].slice.call(collection)
   }
 
-  function collectionToJSON (collection) {
+  function collectionToJSON(collection) {
     // same implementation as .toArray
     return [].slice.call(collection)
   }
 
   // requiring parser/helpers/utils
 
-  function collectionMain (collection, arr) {
+  function collectionMain(collection, arr) {
     // if collection passed in, just return it without further ado
     if (arr instanceof issuemd.fn.constructor) {
       return arr
@@ -89,17 +87,17 @@ module.exports = (function () {
 
     return createCollection(issues)
 
-    function parsedHandler (issue) {
+    function parsedHandler(issue) {
       issues.push(createIssue(issue))
     }
   }
 
   // requiring merger/helpers/utils
 
-  function collectionMerge (collection, input) {
+  function collectionMerge(collection, input) {
     var hashes = collection.hash(true)
 
-    utils.each(input, function (issue) {
+    utils.each(input, function(issue) {
       var idx
       var merged = false
       var issueHash = helpers.hash(helpers.composeSignature(issue.original.creator, issue.original.created))
@@ -119,13 +117,13 @@ module.exports = (function () {
 
   // requiring helpers/utils
 
-  function collectionAttr (collection, attrs) {
+  function collectionAttr(collection, attrs) {
     if (!attrs) {
       return helpers.issueJsonToLoose(collection.toArray()[0])
     } else if (utils.type(attrs) === 'string') {
       return collection.attr()[attrs]
     } else {
-      utils.each(collection, function (issue) {
+      utils.each(collection, function(issue) {
         var issueJsonIn = helpers.looseJsonToIssueJson(attrs, true)
         issueJsonIn.original.meta = issue.original.meta.concat(issueJsonIn.original.meta)
         issueJsonIn.updates = issue.updates.concat(issueJsonIn.updates)
@@ -137,19 +135,19 @@ module.exports = (function () {
   }
 
   // return signature of first issue in collection
-  function collectionSignature (collection) {
+  function collectionSignature(collection) {
     var creator = collection.attr('creator')
     var created = collection.attr('created')
     return creator && created ? helpers.composeSignature(creator, created) : null
   }
 
-  function collectionFilter (collection, first, second) {
+  function collectionFilter(collection, first, second) {
     return second ? filterByAttr(collection, first, second) : filterByFunction(collection, first)
 
-    function filterByFunction (collection, filterFunction) {
+    function filterByFunction(collection, filterFunction) {
       var out = createCollection([])
 
-      collection.each(function (item, index) {
+      collection.each(function(item, index) {
         if (filterFunction(item, index)) {
           out.merge(item)
         }
@@ -158,14 +156,14 @@ module.exports = (function () {
       return out
     }
 
-    function filterByAttr (collection, key, valueIn) {
+    function filterByAttr(collection, key, valueIn) {
       var values = utils.type(valueIn) === 'array' ? valueIn : [valueIn]
 
-      return filterByFunction(collection, function (issue) {
+      return filterByFunction(collection, function(issue) {
         var attrValue = issue.attr(key)
         var match = false
 
-        utils.each(values, function (value) {
+        utils.each(values, function(value) {
           if ((!match && (utils.type(value) === 'regexp' && value.test(attrValue))) || attrValue === value) {
             match = true
             return match
@@ -177,7 +175,7 @@ module.exports = (function () {
     }
   }
 
-  function collectionHash (collection /*, all */) {
+  function collectionHash(collection /*, all */) {
     var all = arguments[arguments.length - 1]
     var arr = []
     var howMany = typeof all === 'boolean' && all ? collection.length : 1
@@ -191,19 +189,19 @@ module.exports = (function () {
   }
 
   // accepts `input` object including modifier, modified
-  function collectionUpdate (collection, input /* ... */) {
+  function collectionUpdate(collection, input /* ... */) {
     if (utils.type(input) !== 'array') {
       input = [].slice.call(arguments, 1)
     }
 
     var updates = []
 
-    utils.each(input, function (update) {
+    utils.each(input, function(update) {
       var build = {
         meta: []
       }
 
-      utils.each(update, function (value, key) {
+      utils.each(update, function(value, key) {
         if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
           build[key] = value
         } else {
@@ -219,10 +217,10 @@ module.exports = (function () {
       updates.push(build)
     })
 
-    utils.each(collection, function (issue) {
-      issue.updates = issue.updates || [];
+    utils.each(collection, function(issue) {
+      issue.updates = issue.updates || []
       // must retain original reference to array, not copy, hence...
-      [].push.apply(issue.updates, updates)
+      ;[].push.apply(issue.updates, updates)
     })
 
     return collection
@@ -230,20 +228,24 @@ module.exports = (function () {
 
   // requiring utils
 
-  function collectionComments (collection) {
-    return utils.reduce(collectionUpdates(collection), function (memo, update) {
-      if (update.type === 'comment') {
-        memo.push(update)
-      }
-      return memo
-    }, [])
+  function collectionComments(collection) {
+    return utils.reduce(
+      collectionUpdates(collection),
+      function(memo, update) {
+        if (update.type === 'comment') {
+          memo.push(update)
+        }
+        return memo
+      },
+      []
+    )
   }
 
-  function collectionUpdates (collection) {
+  function collectionUpdates(collection) {
     if (collection[0]) {
       var out = []
 
-      utils.each(collection[0].updates, function (update) {
+      utils.each(collection[0].updates, function(update) {
         if (utils.type(update.body) === 'string' && update.body.length) {
           out.push(utils.copy(update))
         }
@@ -254,19 +256,19 @@ module.exports = (function () {
   }
 
   // return a deep copy of a collection - breaking references
-  function collectionClone (collection) {
+  function collectionClone(collection) {
     return createCollection(utils.copy(collection.toArray()))
   }
 
   // remove the issues specified by `input` (accepts array, or one or more argument specified indices to be deleted)
-  function collectionRemove (collection, input) {
+  function collectionRemove(collection, input) {
     // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
     input = utils.type(input) === 'array' ? input : [].slice.call(arguments, 1)
 
     // sort and reverse input so that elements are removed from back, and don't change position of next one to remove
     input.sort().reverse()
 
-    utils.each(input, function (index) {
+    utils.each(input, function(index) {
       collection.splice(index, 1)
     })
 
@@ -274,28 +276,28 @@ module.exports = (function () {
   }
 
   // loops over each issue - like underscore's each
-  function collectionEach (collection, func) {
-    utils.each(collection, function (item, i) {
+  function collectionEach(collection, func) {
+    utils.each(collection, function(item, i) {
       return func(createCollection([item]), i)
     })
 
     return collection
   }
 
-  function collectionEq (collection, index) {
+  function collectionEq(collection, index) {
     var newCollection = createCollection([])
     newCollection.push(collection[index])
     return newCollection
   }
 
-  function collectionAdd (collection, issueJson) {
+  function collectionAdd(collection, issueJson) {
     collection.push(createIssue(issueJson))
   }
 
-  function collectionSortUpdates (collection) {
-    collection.each(function (issue) {
-      issue[0].updates.sort(function (a, b) {
-        return (new Date(a.modified)) - (new Date(b.modified))
+  function collectionSortUpdates(collection) {
+    collection.each(function(issue) {
+      issue[0].updates.sort(function(a, b) {
+        return new Date(a.modified) - new Date(b.modified)
       })
     })
 
@@ -303,17 +305,17 @@ module.exports = (function () {
   }
 
   /***********************
-     * supporting funtions *
-     ***********************/
+   * supporting funtions *
+   ***********************/
 
-  function Issue () {}
+  function Issue() {}
 
-  function createIssue (issueJson) {
+  function createIssue(issueJson) {
     var instance = utils.extend(new Issue(), issueJson)
     return instance
   }
 
-  function createCollection (issues) {
+  function createCollection(issues) {
     var instance = new issuemd.fn.constructor()
 
     for (var i = 0, len = issues.length; i < len; i++) {
@@ -323,9 +325,10 @@ module.exports = (function () {
     return instance
   }
 
-  function issuemdMerger (left, right) {
+  function issuemdMerger(left, right) {
     // inspired by: http://stackoverflow.com/a/6713782/665261
-    function objectsEqual (x, y) { // jshint maxcomplexity:15
+    function objectsEqual(x, y) {
+      // jshint maxcomplexity:15
       if (x === y) {
         return true
       }
@@ -345,7 +348,7 @@ module.exports = (function () {
         if (x[p] === y[p]) {
           continue
         }
-        if (typeof (x[p]) !== 'object') {
+        if (typeof x[p] !== 'object') {
           return false
         }
         if (!objectsEqual(x[p], y[p])) {
@@ -363,9 +366,11 @@ module.exports = (function () {
     var rightUpdates = utils.copy(right.updates)
 
     // concat and sort issues
-    var sorted = right.updates ? right.updates.concat(left.updates).sort(function (a, b) {
-      return a.modified > b.modified
-    }) : left.updates
+    var sorted = right.updates
+      ? right.updates.concat(left.updates).sort(function(a, b) {
+          return a.modified > b.modified
+        })
+      : left.updates
 
     var merged = []
 
@@ -381,7 +386,7 @@ module.exports = (function () {
     right.updates = null
 
     if (!objectsEqual(left, right)) {
-      throw (Error('issues are not identical - head must not be modified, only updates added'))
+      throw Error('issues are not identical - head must not be modified, only updates added')
     }
 
     right.updates = rightUpdates

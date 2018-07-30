@@ -1,11 +1,11 @@
 /* global define */
 
-(function (root, factory) {
+;(function(root, factory) {
   'use strict'
 
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
-    define([], function () {
+    define([], function() {
       return (root.returnExportsGlobal = factory(root))
     })
   } else if (typeof exports === 'object') {
@@ -17,7 +17,7 @@
     // Browser globals
     root.returnExportsGlobal = factory(root)
   }
-}(typeof window !== 'undefined' ? window : this, function (root) {
+})(typeof window !== 'undefined' ? window : this, function(root) {
   'use strict'
 
   var utils = require('./utils.js')
@@ -27,13 +27,13 @@
   var _issuemd = this ? this.issuemd : undefined
 
   // attach methods to Issuemd prototype (`issuemd.fn`)
-  utils.each(utils.extend(methods, formatter), function (method, name) {
-    issuemd.fn[name] = function () {
+  utils.each(utils.extend(methods, formatter), function(method, name) {
+    issuemd.fn[name] = function() {
       return method.apply(null, [this].concat([].slice.call(arguments, 0)))
     }
   })
 
-  issuemd.noConflict = function () {
+  issuemd.noConflict = function() {
     if (root && root.issuemd === issuemd) {
       root.issuemd = _issuemd
     }
@@ -43,4 +43,4 @@
   issuemd.utils = utils
 
   return issuemd
-}))
+})
