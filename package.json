@@ -11,8 +11,7 @@
     "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd.js | uglifyjs -o issuemd.min.js",
     "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
     "update": "updtr",
-    "precommit": "pretty-quick --staged",
-    "format": "pretty-quick"
+    "precommit": "pretty-quick --staged"
   },
   "repository": {
     "type": "git",
