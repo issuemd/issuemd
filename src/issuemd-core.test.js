@@ -5,6 +5,8 @@ const assert = require('assert')
 const issuemd = require('./issuemd')
 const fixtures = require('../test/fixtures')
 
+const emptyIssue = issuemd({ created: fixtures.timeString })
+
 describe('export issuemd function', () => {
   it('should load issuemd library', () => {
     assert.equal(typeof issuemd, 'function')
@@ -12,38 +14,48 @@ describe('export issuemd function', () => {
 })
 
 describe('issuemd create', () => {
-  it('should create empty issue with no argument', () => {
-    const issueString = issuemd()
-      .attr({
-        created: fixtures.timeString
-      })
-      .toString()
-
+  it('should create empty issue when no argument provided', () => {
+    const issueString = issuemd().toString()
     assert.equal(issueString, fixtures.emptyString)
   })
 
-  it('should create empty issue passing empty object', () => {
+  it('should create empty issue when passing empty object', () => {
     const issueString = issuemd({})
-      .attr({
-        creator: 'someguy',
-        created: fixtures.timeString
-      })
+      .attr({ created: fixtures.timeString })
       .toString()
 
-    assert.equal(issueString, fixtures.emptyIssue)
+    assert.equal(issueString, emptyIssue)
   })
 
-  it('should create empty issues passing multiple empty objects', () => {
+  it('should create empty issues divided with "\\n" when passing multiple empty objects', () => {
     const issueString = issuemd({}, {}, {})
       .attr({
-        creator: 'someguy',
         created: fixtures.timeString
       })
       .toString()
 
-    const threeIssues = fixtures.emptyIssue + '\n' + fixtures.emptyIssue + '\n' + fixtures.emptyIssue
+    const threeIssues = emptyIssue + '\n' + emptyIssue + '\n' + emptyIssue
 
     assert.equal(issueString, threeIssues)
+  })
+
+  it('should return issuemd object instance if passed in', () => {
+    const issueOne = issuemd({
+      randomParam: 'random value'
+    })
+    const issueTwo = issuemd(issueOne)
+
+    assert.equal(issueOne, issueTwo)
+  })
+
+  // TODO:
+  describe('invalid parameters', () => {
+    it('should throw error when passing null', () => {
+      expect().toThrow()
+    })
+    it('should throw error when passing invalid params', () => {
+      expect().toThrow()
+    })
   })
 })
 
