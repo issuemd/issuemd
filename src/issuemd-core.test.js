@@ -4,6 +4,7 @@ const assert = require('assert')
 
 const issuemd = require('./issuemd')
 const fixtures = require('../test/fixtures')
+const { ERROR_MAIN_INVALID_INPUT } = require('./error-messages')
 
 const emptyIssue = issuemd({ created: fixtures.timeString })
 
@@ -48,19 +49,21 @@ describe('issuemd create', () => {
     assert.equal(issueOne, issueTwo)
   })
 
-  // TODO:
   describe('invalid parameters', () => {
+    const errorMessage = ERROR_MAIN_INVALID_INPUT
+
     it('should throw error when passing null', () => {
       function throwError() {
         const testIssue = issuemd(null)
       }
-      expect(throwError).toThrow()
+      expect(throwError).toThrow(errorMessage)
     })
+
     it('should throw error when passing invalid params', () => {
       function throwError() {
         const testIssue = issuemd(undefined)
       }
-      expect(throwError).toThrow()
+      expect(throwError).toThrow(errorMessage)
     })
   })
 })
