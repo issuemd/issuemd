@@ -1,4 +1,4 @@
-{{#data}}
+module.exports = `{{#data}}
 {{#util.hsep}}+-{{#util.pad}}-{{/util.pad}}-+{{/util.hsep}}
 {{#title}}
 {{#util.hsep}}| {{/util.hsep}}{{#util.htext}}{{#util.body}}{{{.}}}{{/util.body}}{{/util.htext}}{{#util.hsep}} |{{/util.hsep}}
@@ -26,3 +26,4 @@
 {{/comments}}
 {{#util.bsep}}+-{{#util.pad}}-{{/util.pad}}-+{{/util.bsep}}
 {{/data}}
+`

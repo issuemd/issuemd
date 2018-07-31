@@ -1,10 +1,13 @@
 'use strict'
 
 module.exports = (function() {
-  var fs = require('fs')
-
   var mustache = require('mustache')
   var marked = require('marked')
+
+  const summaryTemplate = require('./templates/summary-string')
+  const stringTemplate = require('./templates/issue-string')
+  const htmlTemplate = require('./templates/issue-html')
+  const mdTemplate = require('./templates/issue-md')
 
   var utils = require('./utils.js')
   var methods = require('./issuemd-methods.js')
@@ -46,7 +49,7 @@ module.exports = (function() {
     })
 
     // TODO: if webpack build, drop the filename concat used by browserify (don't forget other instances in this file)
-    var template = templateOverride || fs.readFileSync(__dirname + '/templates/summary-string.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = templateOverride || summaryTemplate
 
     return renderMustache(template, {
       util: getFormatterUtils(0, cols, colorisationFunctions),
@@ -76,7 +79,7 @@ module.exports = (function() {
       return output
     }
 
-    var template = templateOverride || fs.readFileSync(__dirname + '/templates/issue-string.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = templateOverride || stringTemplate
 
     if (issueJSObject) {
       var out = []
@@ -240,13 +243,13 @@ module.exports = (function() {
       })
     })
 
-    var template = options.template || fs.readFileSync(__dirname + '/templates/issue-html.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = options.template || htmlTemplate
 
     return renderMustache(template, issues)
   }
 
   function json2md(issueJSObject, options) {
-    var template = options.template || fs.readFileSync(__dirname + '/templates/issue-md.mustache', 'utf8') // eslint-disable-line no-path-concat
+    var template = options.template || mdTemplate
 
     return renderMustache(template, issueJSObject)
   }

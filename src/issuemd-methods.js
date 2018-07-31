@@ -9,7 +9,8 @@ module.exports = (function() {
   const errors = require('./error-messages')
 
   // issuemd modules
-  var issuemdParser = require('./parser/issuemd-parser-builder.js')
+  // var issuemdParser = require('./parser/issuemd-parser-builder.js')
+  var issuemdParser = require('./parser')
 
   return {
     // main antry point for library `issuemd.fn.main()` aliased to `issuemd()`

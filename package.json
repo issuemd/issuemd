@@ -6,9 +6,8 @@
   "scripts": {
     "start": "npm run test && npm run build",
     "test": "jest --coverage",
-    "build": "npm run build:parser && browserify -t aliasify -t brfs -t browserify-versionify --standalone issuemd src/issuemd.js | uglifyjs -o issuemd.min.js",
-    "build:parser": "pegjs < src/parser/issuemd-parser.pegjs | uglifyjs > issuemd-parser.min.js",
-    "update": "updtr",
+    "build": "npm run build:parser && webpack",
+    "build:parser": "pegjs < src/parser/issuemd-parser.pegjs > src/parser/index.js",
     "precommit": "pretty-quick --staged"
   },
   "repository": {
@@ -33,11 +32,6 @@
     "url": "https://github.com/issuemd/issuemd/issues"
   },
   "homepage": "https://github.com/issuemd/issuemd",
-  "aliasify": {
-    "aliases": {
-      "./parser/issuemd-parser-builder.js": "./issuemd-parser.min.js"
-    }
-  },
   "tonicExampleFilename": ".tonic.js",
   "jest": {
     "testURL": "http://localhost/",
@@ -46,11 +40,7 @@
     ]
   },
   "devDependencies": {
-    "aliasify": "^2.0.0",
     "blueimp-md5": "^2.1.0",
-    "brfs": "^1.4.1",
-    "browserify": "^13.0.1",
-    "browserify-versionify": "^1.0.6",
     "husky": "^0.14.3",
     "jest": "^23.4.2",
     "marked": "0.3.5",
@@ -58,7 +48,7 @@
     "pegjs": "^0.9.0",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
-    "uglify-js": "^2.6.1",
-    "updtr": "^0.1.5"
+    "webpack": "^4.16.3",
+    "webpack-command": "^0.4.1"
   }
 }

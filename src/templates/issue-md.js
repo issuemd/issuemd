@@ -1,5 +1,5 @@
-{{! use triple `{`s for title/value/body to retain special characters }}
-{{#.}}{{#original}}
+// use triple `{`s for title/value/body to retain special characters
+module.exports = `{{#.}}{{#original}}
 ## {{{title}}}
 + created: {{created}}
 + creator: {{{creator}}}
@@ -20,4 +20,4 @@
 
 {{{.}}}{{/body}}{{/updates}}
 
-{{/.}}
+{{/.}}`

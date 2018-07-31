@@ -1,4 +1,4 @@
-{{#.}}
+module.exports = `{{#.}}
 <div class="issue">{{#original}}
   <div class="original">
     <div class="head">
@@ -26,4 +26,4 @@
     </div>{{/updates}}
   </div>
 </div>
-{{/.}}
+{{/.}}`
