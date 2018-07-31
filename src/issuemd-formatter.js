@@ -124,92 +124,68 @@ function json2string(issueJSObject, cols, templateOverride, colorisationFunction
 function getFormatterUtils(widest, cols, colorisationFunctions) {
   cols = cols || 80
 
-  function renderEcho(val, render) {
-    return render(val)
+  const renderEcho = (val, render) => render(val)
+
+  const curtailed = () => (str, render) => {
+    let content = render(str)
+    return curtail(content + repeat(' ', cols - 4 - content.length), cols - 4)
   }
+
+  const body = () => (str, render) => {
+    let content = render(str)
+    return content + repeat(' ', cols - 4 - content.length)
+  }
+
+  const padleft = () => (str, render) => {
+    return repeat(render(str), widest)
+  }
+
+  const padright = () => (str, render) => {
+    return repeat(render(str), cols - widest - 7)
+  }
+
+  const pad12 = () => (str, render) => {
+    return (render(str) + '            ').substr(0, 12)
+  }
+
+  const key = () => (str, render) => {
+    let content = render(str)
+    return content + repeat(' ', widest - content.length)
+  }
+
+  const value = () => (str, render) => {
+    return render(str) + repeat(' ', cols - 7 - widest - render(str).length)
+  }
+
+  const pad = () => (str, render) => {
+    return repeat(render(str), cols - 4)
+  }
+
+  const pad6 = () => (str, render) => {
+    return (render(str) + '      ').substr(0, 6)
+  }
+
+  const bkey = () => (colorisationFunctions && colorisationFunctions.bkey) || renderEcho
+  const bsep = () => (colorisationFunctions && colorisationFunctions.bsep) || renderEcho
+  const htext = () => (colorisationFunctions && colorisationFunctions.htext) || renderEcho
+  const hsep = () => (colorisationFunctions && colorisationFunctions.hsep) || renderEcho
+  const btext = () => (colorisationFunctions && colorisationFunctions.btext) || renderEcho
 
   return {
-    body: body,
-    key: key,
-    value: value,
-    pad: pad,
-    pad6: pad6,
-    pad12: pad12,
-    padleft: padleft,
-    padright: padright,
-    curtailed: curtailed,
-    bkey: function() {
-      return (colorisationFunctions && colorisationFunctions.bkey) || renderEcho
-    },
-    bsep: function() {
-      return (colorisationFunctions && colorisationFunctions.bsep) || renderEcho
-    },
-    htext: function() {
-      return (colorisationFunctions && colorisationFunctions.htext) || renderEcho
-    },
-    hsep: function() {
-      return (colorisationFunctions && colorisationFunctions.hsep) || renderEcho
-    },
-    btext: function() {
-      return (colorisationFunctions && colorisationFunctions.btext) || renderEcho
-    }
-  }
-
-  function curtailed() {
-    return function(str, render) {
-      var content = render(str)
-      return curtail(content + repeat(' ', cols - 4 - content.length), cols - 4)
-    }
-  }
-
-  function body() {
-    return function(str, render) {
-      var content = render(str)
-      return content + repeat(' ', cols - 4 - content.length)
-    }
-  }
-
-  function padleft() {
-    return function(str, render) {
-      return repeat(render(str), widest)
-    }
-  }
-
-  function padright() {
-    return function(str, render) {
-      return repeat(render(str), cols - widest - 7)
-    }
-  }
-
-  function pad12() {
-    return function(str, render) {
-      return (render(str) + '            ').substr(0, 12)
-    }
-  }
-
-  function key() {
-    return function(str, render) {
-      var content = render(str)
-      return content + repeat(' ', widest - content.length)
-    }
-  }
-
-  function value() {
-    return function(str, render) {
-      return render(str) + repeat(' ', cols - 7 - widest - render(str).length)
-    }
-  }
-
-  function pad() {
-    return function(str, render) {
-      return repeat(render(str), cols - 4)
-    }
-  }
-
-  function pad6() {
-    return function(str, render) {
-      return (render(str) + '      ').substr(0, 6)
-    }
+    body,
+    key,
+    value,
+    pad,
+    pad6,
+    pad12,
+    padleft,
+    padright,
+    curtailed,
+    bkey,
+    bsep,
+    htext,
+    hsep,
+    btext
   }
 }
 
@@ -222,7 +198,7 @@ function renderMustache(template, data) {
 }
 
 function json2html(issueJSObject, options) {
-  var issues = utils.copy(issueJSObject)
+  const issues = utils.copy(issueJSObject)
 
   utils.each(issues, function(issue) {
     issue.original.body = issue.original.body ? marked(issue.original.body) : ''
@@ -232,21 +208,21 @@ function json2html(issueJSObject, options) {
     })
   })
 
-  var template = options.template || htmlTemplate
+  const template = options.template || htmlTemplate
 
   return renderMustache(template, issues)
 }
 
 function json2md(issueJSObject, options) {
-  var template = options.template || mdTemplate
+  const template = options.template || mdTemplate
 
   return renderMustache(template, issueJSObject)
 }
 
 function repeat(char, qty) {
-  var out = ''
+  let out = ''
 
-  for (var i = 0; i < qty; i++) {
+  for (let i = 0; i < qty; i++) {
     out += char
   }
 
@@ -273,7 +249,7 @@ function collectionSummary(collection, cols, templateOverride, colorisationFunct
 }
 
 function collectionMd(collection, input /*, options */) {
-  var options = utils.getLastArgument(arguments, 'object') || {}
+  const options = utils.getLastArgument(arguments, 'object') || {}
 
   if (utils.type(input) === 'string') {
     return collection.merge(input)

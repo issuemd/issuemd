@@ -13,24 +13,24 @@ const issuemdParser = require('./parser')
  **********************/
 
 // methods to use as native overrides
-// ... also `function collectionToString` defined further down
+// ... also `function toString` defined further down
 
-function collectionConcat(collection, arr) {
+function concat(collection, arr) {
   return createCollection(collection.toArray().concat(arr.toArray()))
 }
 
-function collectionToArray(collection) {
+function toArray(collection) {
   return [].slice.call(collection)
 }
 
-function collectionToJSON(collection) {
+function toJSON(collection) {
   // same implementation as .toArray
   return [].slice.call(collection)
 }
 
 // requiring parser/helpers/utils
 
-function collectionMain(collection, arr) {
+function main(collection, arr) {
   // if collection passed in, just return it without further ado
   if (arr instanceof issuemd.fn.constructor) {
     return arr
@@ -70,7 +70,7 @@ function collectionMain(collection, arr) {
 
 // requiring merger/helpers/utils
 
-function collectionMerge(collection, input) {
+function merge(collection, input) {
   var hashes = collection.hash(true)
 
   utils.each(input, function(issue) {
@@ -93,7 +93,7 @@ function collectionMerge(collection, input) {
 
 // requiring helpers/utils
 
-function collectionAttr(collection, attrs) {
+function attr(collection, attrs) {
   if (!attrs) {
     return helpers.issueJsonToLoose(collection.toArray()[0])
   } else if (utils.type(attrs) === 'string') {
@@ -111,13 +111,13 @@ function collectionAttr(collection, attrs) {
 }
 
 // return signature of first issue in collection
-function collectionSignature(collection) {
+function signature(collection) {
   var creator = collection.attr('creator')
   var created = collection.attr('created')
   return creator && created ? helpers.composeSignature(creator, created) : null
 }
 
-function collectionFilter(collection, first, second) {
+function filter(collection, first, second) {
   return second ? filterByAttr(collection, first, second) : filterByFunction(collection, first)
 
   function filterByFunction(collection, filterFunction) {
@@ -151,7 +151,7 @@ function collectionFilter(collection, first, second) {
   }
 }
 
-function collectionHash(collection /*, all */) {
+function hash(collection /*, all */) {
   var all = arguments[arguments.length - 1]
   var arr = []
   var howMany = typeof all === 'boolean' && all ? collection.length : 1
@@ -165,19 +165,19 @@ function collectionHash(collection /*, all */) {
 }
 
 // accepts `input` object including modifier, modified
-function collectionUpdate(collection, input /* ... */) {
+function update(collection, input /* ... */) {
   if (utils.type(input) !== 'array') {
     input = [].slice.call(arguments, 1)
   }
 
   var updates = []
 
-  utils.each(input, function(update) {
+  utils.each(input, function(updateInput) {
     var build = {
       meta: []
     }
 
-    utils.each(update, function(value, key) {
+    utils.each(updateInput, function(value, key) {
       if (key === 'type' || key === 'modified' || key === 'modifier' || key === 'body') {
         build[key] = value
       } else {
@@ -204,12 +204,12 @@ function collectionUpdate(collection, input /* ... */) {
 
 // requiring utils
 
-function collectionComments(collection) {
+function comments(collection) {
   return utils.reduce(
-    collectionUpdates(collection),
-    function(memo, update) {
-      if (update.type === 'comment') {
-        memo.push(update)
+    updates(collection),
+    function(memo, updateInput) {
+      if (updateInput.type === 'comment') {
+        memo.push(updateInput)
       }
       return memo
     },
@@ -217,13 +217,13 @@ function collectionComments(collection) {
   )
 }
 
-function collectionUpdates(collection) {
+function updates(collection) {
   if (collection[0]) {
     var out = []
 
-    utils.each(collection[0].updates, function(update) {
-      if (utils.type(update.body) === 'string' && update.body.length) {
-        out.push(utils.copy(update))
+    utils.each(collection[0].updates, function(updateInput) {
+      if (utils.type(updateInput.body) === 'string' && updateInput.body.length) {
+        out.push(utils.copy(updateInput))
       }
     })
 
@@ -232,12 +232,12 @@ function collectionUpdates(collection) {
 }
 
 // return a deep copy of a collection - breaking references
-function collectionClone(collection) {
+function clone(collection) {
   return createCollection(utils.copy(collection.toArray()))
 }
 
 // remove the issues specified by `input` (accepts array, or one or more argument specified indices to be deleted)
-function collectionRemove(collection, input) {
+function remove(collection, input) {
   // set indices to input if it is an array, or arguments array (by converting from arguments array like object)
   input = utils.type(input) === 'array' ? input : [].slice.call(arguments, 1)
 
@@ -252,7 +252,7 @@ function collectionRemove(collection, input) {
 }
 
 // loops over each issue - like underscore's each
-function collectionEach(collection, func) {
+function each(collection, func) {
   utils.each(collection, function(item, i) {
     return func(createCollection([item]), i)
   })
@@ -260,17 +260,17 @@ function collectionEach(collection, func) {
   return collection
 }
 
-function collectionEq(collection, index) {
+function eq(collection, index) {
   var newCollection = createCollection([])
   newCollection.push(collection[index])
   return newCollection
 }
 
-function collectionAdd(collection, issueJson) {
+function add(collection, issueJson) {
   collection.push(createIssue(issueJson))
 }
 
-function collectionSortUpdates(collection) {
+function sortUpdates(collection) {
   collection.each(function(issue) {
     issue[0].updates.sort(function(a, b) {
       return new Date(a.modified) - new Date(b.modified)
@@ -336,29 +336,22 @@ function issuemdMerger(left, right) {
 }
 
 module.exports = {
-  // main antry point for library `issuemd.fn.main()` aliased to `issuemd()`
-  main: collectionMain,
-
-  toJSON: collectionToJSON,
-
-  toArray: collectionToArray,
-  // ... and override native default methods
-  concat: collectionConcat,
-  // merge methods
-  merge: collectionMerge,
-  // helper methods
-  attr: collectionAttr,
-  signature: collectionSignature,
-  filter: collectionFilter,
-  hash: collectionHash,
-  update: collectionUpdate,
-  // util methods
-  updates: collectionUpdates,
-  comments: collectionComments,
-  clone: collectionClone,
-  remove: collectionRemove,
-  each: collectionEach,
-  eq: collectionEq,
-  add: collectionAdd,
-  sortUpdates: collectionSortUpdates
+  main,
+  toJSON,
+  toArray,
+  concat,
+  merge,
+  attr,
+  signature,
+  filter,
+  hash,
+  update,
+  updates,
+  comments,
+  clone,
+  remove,
+  each,
+  eq,
+  add,
+  sortUpdates
 }
