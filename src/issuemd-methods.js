@@ -6,6 +6,7 @@ module.exports = (function() {
   // issuemd utils and helpers
   var utils = require('./utils.js')
   var helpers = require('./issuemd-helpers.js')
+  const errors = require('./error-messages')
 
   // issuemd modules
   var issuemdParser = require('./parser/issuemd-parser-builder.js')
@@ -71,6 +72,12 @@ module.exports = (function() {
     if (utils.type(arr) !== 'array') {
       arr = [].slice.call(arguments, 1)
     }
+
+    arr.forEach(function(item) {
+      if (utils.type(item) === 'null' || utils.type(item) === 'undefined') {
+        throw Error(errors.ERROR_MAIN_INVALID_INPUT)
+      }
+    })
 
     var issues = []
 
