@@ -6,8 +6,8 @@ const stringTemplate = require('./templates/issue-string')
 const htmlTemplate = require('./templates/issue-html')
 const mdTemplate = require('./templates/issue-md')
 
-const utils = require('./utils.js')
-const methods = require('./issuemd-methods.js')
+const utils = require('../utils')
+const methods = require('../methods')
 
 const issuemdFormatter = {
   render: {
@@ -239,16 +239,16 @@ function curtail(input, width) {
 
 // requiring formatter/utils
 
-function collectionToString(collection, cols, templateOverride, colorisationFunctions) {
+function toString(collection, cols, templateOverride, colorisationFunctions) {
   return issuemdFormatter.string(collection.toArray(), cols, templateOverride, colorisationFunctions)
 }
 
 // return string summary table of collection
-function collectionSummary(collection, cols, templateOverride, colorisationFunctions) {
+function summary(collection, cols, templateOverride, colorisationFunctions) {
   return issuemdFormatter.summary(collection.toArray(), cols, templateOverride, colorisationFunctions)
 }
 
-function collectionMd(collection, input /*, options */) {
+function md(collection, input /*, options */) {
   const options = utils.getLastArgument(arguments, 'object') || {}
 
   if (utils.type(input) === 'string') {
@@ -258,14 +258,13 @@ function collectionMd(collection, input /*, options */) {
   }
 }
 
-function collectionHtml(collection, options) {
+function html(collection, options) {
   return issuemdFormatter.html(collection.toArray(), options || {})
 }
 
 module.exports = {
-  // formatter methods
-  toString: collectionToString,
-  summary: collectionSummary,
-  md: collectionMd,
-  html: collectionHtml
+  toString,
+  summary,
+  md,
+  html
 }

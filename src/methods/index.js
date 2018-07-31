@@ -1,12 +1,12 @@
-const issuemd = require('./issuemd-core.js')
-
-// issuemd utils and helpers
-const utils = require('./utils.js')
-const helpers = require('./issuemd-helpers.js')
-const errors = require('./error-messages')
-
-// issuemd modules
-const issuemdParser = require('./parser')
+const issuemd = require('../core')
+const utils = require('../utils')
+const helpers = require('../helpers')
+const errors = require('../error-messages')
+const Issue = require('./support/issue-constructor')
+const createIssue = require('./support/create-issue')
+const createCollection = require('./support/create-collection')
+const issuemdMerger = require('./support/merger')
+const issuemdParser = require('../parser')
 
 /**********************
  * collection methods *
@@ -15,18 +15,11 @@ const issuemdParser = require('./parser')
 // methods to use as native overrides
 // ... also `function toString` defined further down
 
-function concat(collection, arr) {
-  return createCollection(collection.toArray().concat(arr.toArray()))
-}
+const concat = (collection, arr) => createCollection(collection.toArray().concat(arr.toArray()))
 
-function toArray(collection) {
-  return [].slice.call(collection)
-}
+const toArray = (collection) => [].slice.call(collection)
 
-function toJSON(collection) {
-  // same implementation as .toArray
-  return [].slice.call(collection)
-}
+const toJSON = toArray
 
 // requiring parser/helpers/utils
 
@@ -278,61 +271,6 @@ function sortUpdates(collection) {
   })
 
   return collection
-}
-
-/***********************
- * supporting funtions *
- ***********************/
-
-function Issue() {}
-
-function createIssue(issueJson) {
-  var instance = utils.extend(new Issue(), issueJson)
-  return instance
-}
-
-function createCollection(issues) {
-  var instance = new issuemd.fn.constructor()
-
-  for (var i = 0, len = issues.length; i < len; i++) {
-    instance.push(issues[i])
-  }
-
-  return instance
-}
-
-function issuemdMerger(left, right) {
-  var rightUpdates = utils.copy(right.updates)
-
-  // concat and sort issues
-  var sorted = right.updates
-    ? right.updates.concat(left.updates).sort(function(a, b) {
-        return a.modified > b.modified
-      })
-    : left.updates
-
-  var merged = []
-
-  // remove duplicate entries
-  for (var i = 0; i < sorted.length; i++) {
-    if (JSON.stringify(sorted[i]) !== JSON.stringify(sorted[i - 1])) {
-      merged.push(sorted[i])
-    }
-  }
-
-  // check inequality in issue head
-  left.updates = null
-  right.updates = null
-
-  if (!utils.equal(left, right)) {
-    throw Error('issues are not identical - head must not be modified, only updates added')
-  }
-
-  right.updates = rightUpdates
-
-  left.updates = merged
-
-  return left
 }
 
 module.exports = {

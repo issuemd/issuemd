@@ -16,16 +16,16 @@ void (function(root, factory) {
     root.returnExportsGlobal = factory(root)
   }
 })(typeof window !== 'undefined' ? window : this, function(root) {
-  const utils = require('./utils.js')
-  const issuemd = require('./issuemd-core.js')
-  const methods = require('./issuemd-methods.js')
-  const formatter = require('./issuemd-formatter.js')
+  const utils = require('./utils')
+  const issuemd = require('./core')
+  const methods = require('./methods')
+  const formatter = require('./formatter')
   const _issuemd = this ? this.issuemd : undefined
 
   // attach methods to Issuemd prototype (`issuemd.fn`)
   utils.each(utils.extend(methods, formatter), function(method, name) {
-    issuemd.fn[name] = function() {
-      return method.apply(null, [this].concat([].slice.call(arguments, 0)))
+    issuemd.fn[name] = function(...args) {
+      return method(this, ...args)
     }
   })
 
