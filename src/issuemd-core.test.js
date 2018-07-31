@@ -51,10 +51,16 @@ describe('issuemd create', () => {
   // TODO:
   describe('invalid parameters', () => {
     it('should throw error when passing null', () => {
-      expect().toThrow()
+      function throwError() {
+        const testIssue = issuemd(null)
+      }
+      expect(throwError).toThrow()
     })
     it('should throw error when passing invalid params', () => {
-      expect().toThrow()
+      function throwError() {
+        const testIssue = issuemd(undefined)
+      }
+      expect(throwError).toThrow()
     })
   })
 })
