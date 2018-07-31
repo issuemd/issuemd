@@ -1,8 +1,6 @@
 /* global define */
 
-;(function(root, factory) {
-  'use strict'
-
+void (function(root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define([], function() {
@@ -18,13 +16,11 @@
     root.returnExportsGlobal = factory(root)
   }
 })(typeof window !== 'undefined' ? window : this, function(root) {
-  'use strict'
-
-  var utils = require('./utils.js')
-  var issuemd = require('./issuemd-core.js')
-  var methods = require('./issuemd-methods.js')
-  var formatter = require('./issuemd-formatter.js')
-  var _issuemd = this ? this.issuemd : undefined
+  const utils = require('./utils.js')
+  const issuemd = require('./issuemd-core.js')
+  const methods = require('./issuemd-methods.js')
+  const formatter = require('./issuemd-formatter.js')
+  const _issuemd = this ? this.issuemd : undefined
 
   // attach methods to Issuemd prototype (`issuemd.fn`)
   utils.each(utils.extend(methods, formatter), function(method, name) {
