@@ -1,25 +1,25 @@
-const each = require('./each')
-const objectKeys = require('./object-keys')
 const copy = require('./copy')
-const type = require('./type')
-const trim = require('./trim')
+const each = require('./each')
+const equal = require('./equal')
 const extend = require('./extend')
 const getLastArgument = require('./get-last-argument')
-const wordwrap = require('./wordwrap')
 const map = require('./map')
+const objectKeys = require('./object-keys')
 const reduce = require('./reduce')
-const equal = require('./equal')
+const trim = require('./trim')
+const type = require('./type')
+const wordwrap = require('./wordwrap')
 
 module.exports = {
-  getLastArgument,
   copy,
-  type,
   each,
-  objectKeys,
-  trim,
+  equal,
   extend,
-  wordwrap,
+  getLastArgument,
   map,
+  objectKeys,
   reduce,
-  equal
+  trim,
+  type,
+  wordwrap
 }
