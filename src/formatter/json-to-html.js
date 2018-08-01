@@ -3,13 +3,13 @@ const utils = require('../utils')
 const htmlTemplate = require('./templates/issue-html')
 const renderMustache = require('./render-mustache')
 
-function json2html(issueJSObject, options) {
+const json2html = (issueJSObject, options) => {
   const issues = utils.copy(issueJSObject)
 
-  utils.each(issues, function(issue) {
+  utils.each(issues, (issue) => {
     issue.original.body = issue.original.body ? marked(issue.original.body) : ''
 
-    utils.each(issue.updates, function(update) {
+    utils.each(issue.updates, (update) => {
       update.body = update.body ? marked(update.body) : ''
     })
   })

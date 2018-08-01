@@ -1,7 +1,5 @@
 const marked = require('marked')
 
-function renderMarkdown(input) {
-  return marked(input)
-}
+const renderMarkdown = marked
 
 module.exports = renderMarkdown

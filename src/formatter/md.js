@@ -1,7 +1,7 @@
 const formatter = require('./formatter')
 const utils = require('../utils')
 
-function md(collection, input /*, options */) {
+const md = (collection, input /*, options */) => {
   const options = utils.getLastArgument(arguments, 'object') || {}
 
   if (utils.type(input) === 'string') {

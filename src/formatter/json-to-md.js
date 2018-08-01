@@ -1,8 +1,8 @@
-const utils = require('../utils')
 const mdTemplate = require('./templates/issue-md')
 const renderMustache = require('./render-mustache')
+const utils = require('../utils')
 
-function jsonToMd(issueJSObject, options) {
+const jsonToMd = (issueJSObject, options) => {
   const template = options.template || mdTemplate
 
   return renderMustache(template, issueJSObject)

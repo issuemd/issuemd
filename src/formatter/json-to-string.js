@@ -1,10 +1,10 @@
-const utils = require('../utils')
-const renderMustache = require('./render-mustache')
-const methods = require('../methods')
 const getFormatterUtils = require('./get-formatter-utils')
+const methods = require('../methods')
+const renderMustache = require('./render-mustache')
 const stringTemplate = require('./templates/issue-string')
+const utils = require('../utils')
 
-function json2string(issueJSObject, cols, templateOverride, colorisationFunctions) {
+const jsonToString = (issueJSObject, cols, templateOverride, colorisationFunctions) => {
   cols = cols || 80
 
   const splitLines = (input) => {
@@ -15,7 +15,7 @@ function json2string(issueJSObject, cols, templateOverride, colorisationFunction
       .replace(/\n\n+/, '\n\n')
       .split('\n')
 
-    utils.each(lines, function(item) {
+    utils.each(lines, (item) => {
       if (item.length < cols - 4) {
         output.push(item)
       } else {
@@ -32,7 +32,7 @@ function json2string(issueJSObject, cols, templateOverride, colorisationFunction
     const out = []
     const issues = methods.main(null, issueJSObject)
 
-    utils.each(issues, function(issueJson) {
+    utils.each(issues, (issueJson) => {
       const issue = methods.main(null, issueJson)
       const data = {
         meta: [],
@@ -41,7 +41,7 @@ function json2string(issueJSObject, cols, templateOverride, colorisationFunction
 
       let widest = 'signature'.length
 
-      utils.each(issue.attr(), function(value, key) {
+      utils.each(issue.attr(), (value, key) => {
         if (key === 'title' || key === 'body') {
           data[key] = splitLines(value)
         } else if (key === 'created' || key === 'creator') {
@@ -62,7 +62,7 @@ function json2string(issueJSObject, cols, templateOverride, colorisationFunction
         }
       })
 
-      utils.each(issue.updates(), function(value) {
+      utils.each(issue.updates(), (value) => {
         value.body = splitLines(value.body)
         data.comments.push(value)
       })
@@ -79,4 +79,4 @@ function json2string(issueJSObject, cols, templateOverride, colorisationFunction
   }
 }
 
-module.exports = json2string
+module.exports = jsonToString

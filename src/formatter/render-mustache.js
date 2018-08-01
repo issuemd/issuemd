@@ -1,7 +1,5 @@
 const mustache = require('mustache')
 
-function renderMustache(template, data) {
-  return mustache.render(template, data)
-}
+const renderMustache = mustache.render
 
 module.exports = renderMustache

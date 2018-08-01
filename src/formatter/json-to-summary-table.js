@@ -4,12 +4,12 @@ const renderMustache = require('./render-mustache')
 const summaryTemplate = require('./templates/summary-string')
 const getFormatterUtils = require('./get-formatter-utils')
 
-function jsonToSummaryTable(issueJSObject, cols, templateOverride, colorisationFunctions) {
+const jsonToSummaryTable = (issueJSObject, cols, templateOverride, colorisationFunctions) => {
   cols = cols || 80
 
   const data = []
 
-  utils.each(methods.main(null, issueJSObject), function(issue) {
+  utils.each(methods.main(null, issueJSObject), (issue) => {
     const attr = methods.attr(methods.main(null, issue))
 
     data.push({
