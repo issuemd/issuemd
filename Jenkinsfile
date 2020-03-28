@@ -11,7 +11,7 @@ pipeline {
       stage('Docker') {
          steps {
             sh 'docker ps -a'
-            sh 'docker --version'
+            sh 'docker -v ~:/home:ro node:12-alpine ls home'
          }
       }
    }
