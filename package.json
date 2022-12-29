@@ -52,7 +52,7 @@
     "browserify": "^13.0.1",
     "browserify-versionify": "^1.0.6",
     "husky": "^0.14.3",
-    "jest": "^23.4.2",
+    "jest": "^29.3.1",
     "marked": "^0.4.0",
     "mustache": "^2.2.0",
     "pegjs": "^0.9.0",
